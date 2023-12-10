@@ -5,13 +5,30 @@ import input
 import random as rd
 import reedsolo
 import re
-
+import helper
+import image_creator
+import decoder
 
 segment_size = 4
 
+class DropletRecovery():
+    seed: str
+    data: str
+    error_corr: str
+    has_errors: bool
+    
+    def __init__(self, seed, data, error_corr, has_errors):
+        self.seed = seed
+        self.data = data
+        self.error_corr = error_corr
+        self.has_errors = has_errors
+    
+
 def preprocess(data: List[int], segment_len: int):
-    segments = [data[i:i + segment_len] for i in range(0, len(data), segment_len)]
+    segments = [data[i:i + segment_len]
+                for i in range(0, len(data), segment_len)]
     return segments
+
 
 def soliton_distribution():
     """ returns at randomly how many segments to use"""
@@ -31,12 +48,13 @@ def create_droplet_bin(segments: List[List[int]]) -> List[int]:
         bit = sum(bits) % 2
         segments_bitwise.append(bit)
     # now the segments_bitwise has the bitwise addition result
-    # generate seed 
-    seed = [int(bit) for bit in bin(rd.randint(0,3))[2:].zfill(2)]
+    # generate seed
+    seed = [int(bit) for bit in bin(rd.randint(0, 3))[2:].zfill(2)]
     for bit in seed:
         segments_bitwise.insert(0, bit)
     segments_bitwise_rs = add_reed_solomon(segments_bitwise)
     return segments_bitwise_rs
+
 
 def luby_trfm(segments):
     droplet = create_droplet_bin(segments)
@@ -47,18 +65,13 @@ def luby_trfm(segments):
         return None
     return droplet_dna
 
-def bin_array_to_bytes(arr: List[int]):
-    as_int = int(''.join(map(str, arr)).zfill(8),2)
-    to_bytes = as_int.to_bytes((len(arr) + 7) // 8, 'big')
-    return to_bytes
 
 def add_reed_solomon(droplet_bits: List[int]):
-    # Convert the bit string to bytes
-    # droplet_bytes = int(''.join(map(str, droplet_bits)), 2).to_bytes((len(droplet_bits) + 7) // 8, 'big')
-    droplet_bytes = bin_array_to_bytes(droplet_bits)
+    droplet_bytes = helper.bin_array_to_bytes(droplet_bits)
     encoder = reedsolo.RSCodec(1)
     droplet_with_rs_bytes = encoder.encode(droplet_bytes)
-    droplet_with_rs_bits = bin(int.from_bytes(droplet_with_rs_bytes,'big'))[2:]
+    droplet_with_rs_bits = bin(int.from_bytes(
+        droplet_with_rs_bytes, 'big'))[2:]
     # Pad the bit string to the original length if necessary
     droplet_with_rs_bits = droplet_with_rs_bits.zfill(len(droplet_bits))
     return [int(item) for item in droplet_with_rs_bits]
@@ -76,12 +89,14 @@ def transform_to_dna(droplet: List[int]) -> str:
     two_bits_mapped = [mapping.get(item) for item in two_bits_into_str]
     return ''.join(two_bits_mapped)
 
+
 def has_repetitive_chars(sequence: str):
     regex = re.compile(r'(.+)\1')
     match = regex.search(sequence)
     if match:
         return True
     return False
+
 
 def has_high_gc_content(sequence: str) -> bool:
     gc_threshhold = 0.6 if len(sequence) <= 3 else 0.4  # set a max threshold
@@ -101,47 +116,68 @@ def oligo_creation(segments: List[List[int]]) -> List[str]:
 
 ###### DATA RECOVERY ######
 
-def droplet_recovery(oligo: str):
-    
+def droplet_recovery(oligo: str) -> DropletRecovery:
     mapping = {
         'A': '00',
         'C': '01',
         'G': '10',
         'T': '11',
     }
-    
     binary_sequence = ''.join([mapping[nucleotide] for nucleotide in oligo])
     seed = binary_sequence[:2]
     data = binary_sequence[2:-8]
     error_corr = binary_sequence[-8:]
-    
-    has_errors = check_reed_solomon_error(error_corr)
-    
-    print(f'oligo {oligo}, seed: {seed}, data: {data}, error_cor: {error_corr}, has errors {has_errors}')
+    has_errors = check_reed_solomon_error(binary_sequence)
+
+    print(
+        f'oligo {oligo}, seed: {seed}, data: {data}, error_cor: {error_corr}, has errors {has_errors}')
+    # return DropletRecovery(seed=seed, data=data, error_corr=error_corr, has_errors=has_errors)
+    return {"seed": seed, "data": data, "error_corr": error_corr, "has_errors": has_errors}
+
 
 def check_reed_solomon_error(error_correcting_code):
-    # Reed-Solomon parameters
     rs = reedsolo.RSCodec(1)
-
-    # Convert binary string to bytes
-
     try:
-        # Attempt to decode using Reed-Solomon
-        decoded_data = rs.decode([int(bit) for bit in error_correcting_code])
-        print('decoded', decoded_data)
-        return False  # If decoding succeeds, no errors
+        rs.decode([int(bit) for bit in error_correcting_code])
+        return False
     except reedsolo.ReedSolomonError:
-        return True  # If decoding fails, there are errors
-    
+        return True
+
+
+def induce_errors(oligos: List[str]):
+    oligos[1] = helper.change_char(oligos[1], 1, 'A')
+    oligos[1] = helper.change_char(oligos[1], 2, 'A')
+
+
+def decode_and_write_to_file(oligos: List[str]):
+    # @TODO: implement
+    data = []
+    image_creator.create_image_from_arr(data, 'logo_short')
+
+
+def segment_interference():
+    # @TODO: implement
+    pass
+
+
 def main():
     global segment_size
     data = input.picture_short
-    filter_condition = lambda x: len(x) % segment_size == 0
+    # image_creator.create_image_from_arr(data, 'logo_short')
+    def filter_condition(x): return len(x) % segment_size == 0
     segments = preprocess(data, segment_size)
     segments = [elem for elem in segments if filter_condition(elem)]
     oligos = oligo_creation(segments)
+    induce_errors(oligos)
+    
+    recovered_droplets: List[DropletRecovery] = []
     for oligo in oligos:
-        droplet_recovery(oligo)
+        droplet = DropletRecovery(**droplet_recovery(oligo))
+        recovered_droplets.append(droplet)
+        
+    decoder.start(recovered_droplets)
+    # decode_and_write_to_file(oligos)
+
 
 if __name__ == '__main__':
     sys.exit(main())
