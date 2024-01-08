@@ -25,8 +25,17 @@ class DropletRecovery():
     
 
 def preprocess(data: List[int], segment_len: int):
+    """Splits the original data into non-overlapping segments 
+        
+    Segment_len is a user defined parameter denoting the length of segments.
+    If there are segments which have a smaller length then the user defined length
+    they are filled with zeros.
+    Official paper no explicit documentation on how to proceed in such cases. """
     segments = [data[i:i + segment_len]
                 for i in range(0, len(data), segment_len)]
+    for segment in segments:
+        if len(segment) != segment_len:
+            segment = segment + [0]*(segment_len - len(segment))
     return segments
 
 
@@ -166,7 +175,7 @@ def main():
     # image_creator.create_image_from_arr(data, 'logo_short')
     def filter_condition(x): return len(x) % segment_size == 0
     segments = preprocess(data, segment_size)
-    segments = [elem for elem in segments if filter_condition(elem)]
+    # segments = [elem for elem in segments if filter_condition(elem)]
     oligos = oligo_creation(segments)
     induce_errors(oligos)
     
