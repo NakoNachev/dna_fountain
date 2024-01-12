@@ -8,21 +8,25 @@ import re
 import helper
 import image_creator
 import decoder
+from pylfsr import LFSR
+from soliton import robust_soliton_distribution
+from dataclasses import dataclass
 
 segment_size = 4
+initial_seed = [1, 0, 0, 1]
+initial_seed_paper = bin(42)[2:].zfill(32)  # 42 as 32-bit binary
+poly = [4,3]  # for x^4 + x^3 + 1 polynomial
+poly_32bit = [32,30,26,25]   # FOR x^32 + x^30 + x^26 + x^25 + 1 polynomial
+lfsr = None
+soliton_distribution = None
 
+
+@dataclass
 class DropletRecovery():
     seed: str
     data: str
     error_corr: str
     has_errors: bool
-    
-    def __init__(self, seed, data, error_corr, has_errors):
-        self.seed = seed
-        self.data = data
-        self.error_corr = error_corr
-        self.has_errors = has_errors
-    
 
 def preprocess(data: List[int], segment_len: int):
     """Splits the original data into non-overlapping segments 
@@ -39,26 +43,33 @@ def preprocess(data: List[int], segment_len: int):
     return segments
 
 
-def soliton_distribution():
-    """ returns at randomly how many segments to use"""
-    # https://stackoverflow.com/questions/4265988/generate-random-numbers-with-a-given-numerical-distribution for random gen
-    return 2
+def get_rd_choice_from_soliton(K:int):
+    global soliton_distribution
+    choice = rd.choices(range(0,K), soliton_distribution)
+    if choice:
+        return choice[0] + 1
+    return 2 # default solution
 
+
+def get_lsfr_seed() -> List[int]:
+    """ Returns the new state of the seed """
+    global lfsr
+    lfsr.next()
+    return lfsr.state
 
 def create_droplet_bin(segments: List[List[int]]) -> List[int]:
     """ creates a droplet given segments """
     global segment_size
-    sample_size = soliton_distribution()
+    sample_size = get_rd_choice_from_soliton(len(segments))
     # take x random segments to combine for the drop
     rand_segments = rd.sample(segments, sample_size)
-    segments_bitwise: List[int] = []
-    for bits in zip(*rand_segments):
-        # bitwise addition for all segments
-        bit = sum(bits) % 2
-        segments_bitwise.append(bit)
-    # now the segments_bitwise has the bitwise addition result
+    segments_bitwise: List[int] = [sum(bits) % 2 for bits in zip(*rand_segments)]
+    if len(segments_bitwise) != 4:
+        for _ in range(4-len(segments_bitwise)):
+            segments_bitwise.insert(0, 0)
     # generate seed
-    seed = [int(bit) for bit in bin(rd.randint(0, 3))[2:].zfill(2)]
+    # seed = [int(bit) for bit in bin(rd.randint(0, 3))[2:].zfill(2)]
+    seed = get_lsfr_seed()
     for bit in seed:
         segments_bitwise.insert(0, bit)
     segments_bitwise_rs = add_reed_solomon(segments_bitwise)
@@ -170,11 +181,22 @@ def segment_interference():
 
 
 def main():
-    global segment_size
+    global segment_size, initial_seed, poly, lfsr, soliton_distribution
+    lfsr = LFSR(initstate=initial_seed, fpoly=poly)
     data = input.picture_short
     # image_creator.create_image_from_arr(data, 'logo_short')
     def filter_condition(x): return len(x) % segment_size == 0
     segments = preprocess(data, segment_size)
+    
+    # calculate soliton distribution
+    
+    K = len(segments)
+    c = 0.025
+    delta = 0.001
+    soliton_distribution = robust_soliton_distribution(K,c,delta)
+    
+    
+    print(f'total sgments: {len(segments)}')
     # segments = [elem for elem in segments if filter_condition(elem)]
     oligos = oligo_creation(segments)
     induce_errors(oligos)

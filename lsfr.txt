@@ -1,0 +1,88 @@
+state = [1,0,0,1]
+
+if we decide to tap the two rightmost bits we usually xor them
+
+iter 1:
+    - state shifts to the right -> x 1 0 0 
+    - to calculate x we XOR 0 and 1 -> 1
+    - therefore new state is [1 1 0 0]
+
+iter 2: 
+    - shift: x 1 1 0
+    - calculate: 0 XOR 0 -> 0
+    - therefore new state is [0 1 1 0]
+
+if the taps are correct -> it should repeat the seed after 15 tries
+
+
+example in python for polynomial x^4 + x^3 + 1 with and 4 bit seed:
+
+state = [1,0,0,1]
+poly = [4,3]   
+L = LFSR(initstate=state, fpoly=poly)
+
+# print the info
+L.info()
+
+for _ in range(20):
+    L.next()
+    print(f' state is {L.state}')
+
+
+
+For a 4-bit Linear Feedback Shift Register (LFSR), choosing the right tap positions is crucial to ensure that the LFSR generates a maximal length sequence. A maximal length sequence is one where the LFSR cycles through all possible states (excluding the all-zero state) before repeating, which for a 4-bit LFSR is 
+2
+4
+−
+1
+=
+15
+2 
+4
+ −1=15 states.
+
+The taps in an LFSR are determined by the feedback polynomial. For a maximal length sequence, you need to use a primitive polynomial. In the case of a 4-bit LFSR, there are a few primitive polynomials you can choose from. Here are some examples:
+
+�
+4
++
+�
++
+1
+x 
+4
+ +x+1 (This translates to taps at positions [4, 1]).
+�
+4
++
+�
+3
++
+1
+x 
+4
+ +x 
+3
+ +1 (This translates to taps at positions [4, 3]).
+�
+4
++
+�
+3
++
+�
+2
++
+�
++
+1
+x 
+4
+ +x 
+3
+ +x 
+2
+ +x+1 (This translates to taps at positions [4, 3, 2, 1]).
+Each of these polynomials will ensure that your LFSR generates a sequence that covers all 15 possible non-zero states for a 4-bit register. The choice of which specific polynomial to use can depend on other factors in your system or personal preference if all you need is a maximal length sequence.
+
+Here's how you might set up and use one of these in Python, using the pylfsr package for example:
