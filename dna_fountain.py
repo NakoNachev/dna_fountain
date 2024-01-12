@@ -14,6 +14,7 @@ from dataclasses import dataclass
 
 segment_size = 4
 initial_seed = [1, 0, 0, 1]
+seed_size = len(initial_seed)
 initial_seed_paper = bin(42)[2:].zfill(32)  # 42 as 32-bit binary
 poly = [4,3]  # for x^4 + x^3 + 1 polynomial
 poly_32bit = [32,30,26,25]   # FOR x^32 + x^30 + x^26 + x^25 + 1 polynomial
@@ -44,6 +45,8 @@ def preprocess(data: List[int], segment_len: int):
 
 
 def get_rd_choice_from_soliton(K:int):
+    ''' get a random number of segments to join by using the generated distribution from soliton
+        K is the total number of segments'''
     global soliton_distribution
     choice = rd.choices(range(0,K), soliton_distribution)
     if choice:
@@ -52,7 +55,7 @@ def get_rd_choice_from_soliton(K:int):
 
 
 def get_lsfr_seed() -> List[int]:
-    """ Returns the new state of the seed """
+    """ Uses the created lsfr generator to generate a new seed"""
     global lfsr
     lfsr.next()
     return lfsr.state
@@ -64,20 +67,23 @@ def create_droplet_bin(segments: List[List[int]]) -> List[int]:
     # take x random segments to combine for the drop
     rand_segments = rd.sample(segments, sample_size)
     segments_bitwise: List[int] = [sum(bits) % 2 for bits in zip(*rand_segments)]
-    if len(segments_bitwise) != 4:
-        for _ in range(4-len(segments_bitwise)):
+    if len(segments_bitwise) != segment_size:
+        for _ in range(segment_size-len(segments_bitwise)):
             segments_bitwise.insert(0, 0)
     # generate seed
     # seed = [int(bit) for bit in bin(rd.randint(0, 3))[2:].zfill(2)]
     seed = get_lsfr_seed()
     for bit in seed:
         segments_bitwise.insert(0, bit)
-    segments_bitwise_rs = add_reed_solomon(segments_bitwise)
-    return segments_bitwise_rs
+    #@TODO: activate, previous problem with solomon code not always being the same length
+    # segments_bitwise_rs = add_reed_solomon(segments_bitwise)
+    # return segments_bitwise_rs
+    return segments_bitwise
 
 
-def luby_trfm(segments):
-    droplet = create_droplet_bin(segments)
+def luby_trfm(segments: List[List[int]]) -> str:
+    droplet: List[int] = create_droplet_bin(segments)
+    print(f' droplet: {droplet}')
     droplet_dna = transform_to_dna(droplet)
     if has_repetitive_chars(droplet_dna):
         return None
@@ -137,6 +143,7 @@ def oligo_creation(segments: List[List[int]]) -> List[str]:
 ###### DATA RECOVERY ######
 
 def droplet_recovery(oligo: str) -> DropletRecovery:
+    global seed_size, segment_size
     mapping = {
         'A': '00',
         'C': '01',
@@ -144,9 +151,9 @@ def droplet_recovery(oligo: str) -> DropletRecovery:
         'T': '11',
     }
     binary_sequence = ''.join([mapping[nucleotide] for nucleotide in oligo])
-    seed = binary_sequence[:2]
-    data = binary_sequence[2:-8]
-    error_corr = binary_sequence[-8:]
+    seed = binary_sequence[:seed_size]
+    data = binary_sequence[seed_size:(seed_size + segment_size)]
+    error_corr = binary_sequence[(seed_size + segment_size):]
     has_errors = check_reed_solomon_error(binary_sequence)
 
     print(
@@ -184,8 +191,6 @@ def main():
     global segment_size, initial_seed, poly, lfsr, soliton_distribution
     lfsr = LFSR(initstate=initial_seed, fpoly=poly)
     data = input.picture_short
-    # image_creator.create_image_from_arr(data, 'logo_short')
-    def filter_condition(x): return len(x) % segment_size == 0
     segments = preprocess(data, segment_size)
     
     # calculate soliton distribution
@@ -195,12 +200,13 @@ def main():
     delta = 0.001
     soliton_distribution = robust_soliton_distribution(K,c,delta)
     
-    
-    print(f'total sgments: {len(segments)}')
-    # segments = [elem for elem in segments if filter_condition(elem)]
+    # create oligos
+
     oligos = oligo_creation(segments)
     induce_errors(oligos)
     
+    # data recovery
+
     recovered_droplets: List[DropletRecovery] = []
     for oligo in oligos:
         droplet = DropletRecovery(**droplet_recovery(oligo))
