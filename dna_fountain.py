@@ -7,10 +7,10 @@ import reedsolo
 import re
 import helper
 import image_creator
-import decoder
 from pylfsr import LFSR
 from soliton import robust_soliton_distribution
-from dataclasses import dataclass
+from decoder import decode_droplet
+from models import DropletData, DropletRecovery, OligoData
 
 segment_size = 4
 initial_seed = [1, 0, 0, 1]
@@ -21,13 +21,6 @@ poly_32bit = [32,30,26,25]   # FOR x^32 + x^30 + x^26 + x^25 + 1 polynomial
 lfsr = None
 soliton_distribution = None
 
-
-@dataclass
-class DropletRecovery():
-    seed: str
-    data: str
-    error_corr: str
-    has_errors: bool
 
 def preprocess(data: List[int], segment_len: int):
     """Splits the original data into non-overlapping segments 
@@ -60,7 +53,7 @@ def get_lsfr_seed() -> List[int]:
     lfsr.next()
     return lfsr.state
 
-def create_droplet_bin(segments: List[List[int]]) -> List[int]:
+def create_droplet_bin(segments: List[List[int]]) -> DropletData:
     """ creates a droplet given segments """
     global segment_size
     sample_size = get_rd_choice_from_soliton(len(segments))
@@ -78,18 +71,17 @@ def create_droplet_bin(segments: List[List[int]]) -> List[int]:
     #@TODO: activate, previous problem with solomon code not always being the same length
     # segments_bitwise_rs = add_reed_solomon(segments_bitwise)
     # return segments_bitwise_rs
-    return segments_bitwise
+    return DropletData(segments_bitwise, sample_size)
 
 
-def luby_trfm(segments: List[List[int]]) -> str:
-    droplet: List[int] = create_droplet_bin(segments)
-    print(f' droplet: {droplet}')
-    droplet_dna = transform_to_dna(droplet)
+def luby_trfm(segments: List[List[int]]) -> OligoData:
+    droplet = create_droplet_bin(segments)
+    droplet_dna = transform_to_dna(droplet.droplet)
     if has_repetitive_chars(droplet_dna):
         return None
     if has_high_gc_content(droplet_dna):
         return None
-    return droplet_dna
+    return OligoData(droplet_dna, droplet.combinations_num)
 
 
 def add_reed_solomon(droplet_bits: List[int]):
@@ -130,45 +122,14 @@ def has_high_gc_content(sequence: str) -> bool:
     return gc_cnt / len(sequence) >= gc_threshhold
 
 
-def oligo_creation(segments: List[List[int]]) -> List[str]:
+def oligo_creation(segments: List[List[int]]) -> OligoData:
     desired_oligo_len = len(segments)*1.1
-    oligos: List[str] = []
+    oligos: List[OligoData] = []
     while len(oligos) < desired_oligo_len:
-        droplet = luby_trfm(segments)
-        if droplet:
-            oligos.append(droplet)
+        oligo: OligoData = luby_trfm(segments)
+        if oligo:
+            oligos.append(oligo)
     return oligos
-
-
-###### DATA RECOVERY ######
-
-def droplet_recovery(oligo: str) -> DropletRecovery:
-    global seed_size, segment_size
-    mapping = {
-        'A': '00',
-        'C': '01',
-        'G': '10',
-        'T': '11',
-    }
-    binary_sequence = ''.join([mapping[nucleotide] for nucleotide in oligo])
-    seed = binary_sequence[:seed_size]
-    data = binary_sequence[seed_size:(seed_size + segment_size)]
-    error_corr = binary_sequence[(seed_size + segment_size):]
-    has_errors = check_reed_solomon_error(binary_sequence)
-
-    print(
-        f'oligo {oligo}, seed: {seed}, data: {data}, error_cor: {error_corr}, has errors {has_errors}')
-    # return DropletRecovery(seed=seed, data=data, error_corr=error_corr, has_errors=has_errors)
-    return {"seed": seed, "data": data, "error_corr": error_corr, "has_errors": has_errors}
-
-
-def check_reed_solomon_error(error_correcting_code):
-    rs = reedsolo.RSCodec(1)
-    try:
-        rs.decode([int(bit) for bit in error_correcting_code])
-        return False
-    except reedsolo.ReedSolomonError:
-        return True
 
 
 def induce_errors(oligos: List[str]):
@@ -190,11 +151,10 @@ def segment_interference():
 def main():
     global segment_size, initial_seed, poly, lfsr, soliton_distribution
     lfsr = LFSR(initstate=initial_seed, fpoly=poly)
-    data = input.picture_short
+    data = input.picture_minimal
     segments = preprocess(data, segment_size)
     
     # calculate soliton distribution
-    
     K = len(segments)
     c = 0.025
     delta = 0.001
@@ -203,16 +163,21 @@ def main():
     # create oligos
 
     oligos = oligo_creation(segments)
-    induce_errors(oligos)
+    # induce_errors(oligos)  #@TODO: activate
     
     # data recovery
 
-    recovered_droplets: List[DropletRecovery] = []
+
     for oligo in oligos:
-        droplet = DropletRecovery(**droplet_recovery(oligo))
-        recovered_droplets.append(droplet)
+        droplet = decode_droplet(oligo, len(segments), segment_size, seed_size, poly)
+        print(droplet)
+
+    # recovered_droplets: List[DropletRecovery] = []
+    # for oligo in oligos:
+    #     droplet = DropletRecovery(**droplet_recovery(oligo))
+    #     recovered_droplets.append(droplet)
         
-    decoder.start(recovered_droplets)
+    # decoder.start(recovered_droplets)
     # decode_and_write_to_file(oligos)
 
 
