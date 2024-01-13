@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import List
 
+
 @dataclass
 class DropletRecovery():
     seed: str
@@ -8,10 +9,12 @@ class DropletRecovery():
     error_corr: str
     has_errors: bool
 
+
 @dataclass
 class DropletData():
     droplet: List[int]
     combinations_num: int
+
 
 @dataclass
 class OligoData():
