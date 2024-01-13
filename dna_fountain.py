@@ -8,16 +8,21 @@ import re
 import helper
 import image_creator
 from pylfsr import LFSR
-from soliton import robust_soliton_distribution
-from decoder import decode_droplet
+from soliton import robust_soliton_distribution, ideal_soliton_distribution
+from decoder import recursively_infer_segments, recover_file_with_repeated_passes
 from models import DropletData, DropletRecovery, OligoData
 
 segment_size = 4
-initial_seed = [1, 0, 0, 1]
+# initial_seed = [1, 0, 0, 0]
+# initial_seed = [1,0]
+# initial_seed = [1,0,0,0,0,0,0,0,0,0]
+initial_seed = [1] + [0]*31
 seed_size = len(initial_seed)
 initial_seed_paper = bin(42)[2:].zfill(32)  # 42 as 32-bit binary
-poly = [4, 3]  # for x^4 + x^3 + 1 polynomial
-poly_32bit = [32, 30, 26, 25]   # FOR x^32 + x^30 + x^26 + x^25 + 1 polynomial
+# poly = [4, 3]  # for x^4 + x^3 + 1 polynomial
+# poly = [10,7,5,2,1]
+# poly = [2,1]
+poly = [32, 30, 26, 25]   # FOR x^32 + x^30 + x^26 + x^25 + 1 polynomial
 lfsr = None
 soliton_distribution = None
 
@@ -111,7 +116,7 @@ def transform_to_dna(droplet: List[int]) -> str:
 
 
 def has_repetitive_chars(sequence: str):
-    regex = re.compile(r'(.+)\1')
+    regex = re.compile(r'(.+)\1{' + str(10) + ',}')
     match = regex.search(sequence)
     if match:
         return True
@@ -120,11 +125,11 @@ def has_repetitive_chars(sequence: str):
 
 def has_high_gc_content(sequence: str) -> bool:
     gc_threshhold = 0.6 if len(sequence) <= 3 else 0.4  # set a max threshold
-    gc_cnt = sequence.count('GC')
+    gc_cnt = sequence.count('G') + sequence.count('C')
     return gc_cnt / len(sequence) >= gc_threshhold
 
 
-def oligo_creation(segments: List[List[int]]) -> OligoData:
+def oligo_creation(segments: List[List[int]]) -> List[OligoData]:
     desired_oligo_len = len(segments)*1.1
     oligos: List[OligoData] = []
     while len(oligos) < desired_oligo_len:
@@ -153,32 +158,18 @@ def segment_interference():
 def main():
     global segment_size, initial_seed, poly, lfsr, soliton_distribution
     lfsr = LFSR(initstate=initial_seed, fpoly=poly)
-    data = input.picture_minimal
+    data = input.picture_short
     segments = preprocess(data, segment_size)
-
     # calculate soliton distribution
-    K = len(segments)
-    c = 0.025
-    delta = 0.001
-    soliton_distribution = robust_soliton_distribution(K, c, delta)
+    soliton_distribution = robust_soliton_distribution(K=len(segments), c=0.025, delta=0.001)
 
     # create oligos
-
     oligos = oligo_creation(segments)
     # induce_errors(oligos)  #@TODO: activate
 
-    # data recovery
-
-    for oligo in oligos:
-        droplet = decode_droplet(oligo, len(
-            segments), segment_size, seed_size, poly)
-        print(droplet)
-
-    # recovered_droplets: List[DropletRecovery] = []
-    # for oligo in oligos:
-    #     droplet = DropletRecovery(**droplet_recovery(oligo))
-    #     recovered_droplets.append(droplet)
-
+    data = recover_file_with_repeated_passes(oligos, len(segments), segment_size, seed_size, poly, 10)
+    print(f'final processed count {len(data)} / {len(segments)}')
+    print(dict(sorted(data.items())))
     # decoder.start(recovered_droplets)
     # decode_and_write_to_file(oligos)
 

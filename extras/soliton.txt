@@ -1,0 +1,10 @@
+nderstanding c and delta:
+c (Scaling Parameter): Affects the robust part of the distribution. A larger c generally increases the probability of selecting larger sets of segments, making the distribution "more robust". A very small c might not sufficiently increase the probabilities for larger droplet sizes.
+
+delta (Failure Probability): A small probability that influences the tail of the distribution. A smaller delta makes the tail heavier, which increases the chances of including more segments in a droplet, thus potentially aiding in successful recovery.
+
+Adjusting c and delta:
+Given your current values (c = 0.025, delta = 0.001), you might want to try increasing c slightly. This could help in creating a more robust tail in the distribution, thereby increasing the likelihood of generating droplets with more segments. For instance, you could experiment with values of c in the range of 0.1 to 0.2.
+
+Revised Sampling Function:
+It's important to ensure that your sampling function correctly interprets the distribution. The change to range(1, K+1) is correct conceptually, as it aligns with how you defined your distribution starting from 1. If changing this range results in 0 inferred segments, it suggests there might be another issue at play, potentially related to how the distribution is being used in the segment selection process

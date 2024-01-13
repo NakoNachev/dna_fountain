@@ -1,0 +1,8 @@
+- first part of the decoding process is to extract indices from the oligos
+- this is achieved the following way:
+    - extract seed from oligo
+    - extract data from oligo (has to be mapped to binary first from dna encoding)
+    - create LFSR from the seed
+    - now, iterate each state in the LFSR
+        - each state corresponds to one index
+        - collect all indices (they are equal to the total amount of combinations to form that oligo)

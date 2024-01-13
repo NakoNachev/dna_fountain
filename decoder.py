@@ -1,28 +1,8 @@
-from typing import List
+from typing import List, Dict
 from pylfsr import LFSR
-from models import DropletRecovery, OligoData
 import reedsolo
-
-
-def segment_interference(droplet):
-    # @TODO: implement
-    pass
-
-
-def remove_oligos_with_errors(droplets: List[DropletRecovery]):
-    return [droplet for droplet in droplets if not droplet.has_errors]
-
-
-def generate_prng():
-    # @TODO: implement
-    pass
-
-
-def start(droplets: List[DropletRecovery]):
-    before = len(droplets)
-    droplets = remove_oligos_with_errors(droplets)
-    print(f' before {before}, after: {len(droplets)}')
-
+from models import OligoData
+from helper import xor_strings
 
 def check_reed_solomon_error(error_correcting_code: str):
     rs = reedsolo.RSCodec(1)
@@ -37,8 +17,7 @@ def init_lfsr_from_seed(seed: List[int], poly: List[int]) -> LFSR:
     return LFSR(initstate=seed, fpoly=poly)
 
 
-def decode_droplet(oligo: OligoData, total_segments: int, segment_size: int, seed_size: int, poly: List[int]):
-    print(f'oligo {oligo}')
+def decode_droplet(oligo: OligoData, segment_size: int, seed_size: int, poly: List[int]):
     mapping = {
         'A': '00',
         'C': '01',
@@ -49,21 +28,76 @@ def decode_droplet(oligo: OligoData, total_segments: int, segment_size: int, see
     binary_sequence = ''.join([mapping[nucleotide]
                               for nucleotide in oligo.oligo])
     seed = binary_sequence[:seed_size]
-    seed_as_int = [int(bit) for bit in seed]
+    seed_int = [int(bit) for bit in seed]
     data = binary_sequence[seed_size:(seed_size + segment_size)]
     error_corr = binary_sequence[(seed_size + segment_size):]
     # has_errors = check_reed_solomon_error(binary_sequence)
+    return data, seed_int, poly
 
-    # init LSFR from seed
-    lfsr = init_lfsr_from_seed(seed_as_int, poly)
-    print(f'data {data}')
+def get_segment_indices(oligo: OligoData, total_segments: int, segment_size: int, seed_size: int, poly: List[int]) -> List[int]:
+    data, seed_int, poly = decode_droplet(oligo, segment_size, seed_size, poly)
+    lfsr = init_lfsr_from_seed(seed_int, poly)
 
-    # prepare
+    # extracts index from the current state of the seed
     segment_indices = []
     for _ in range(oligo.combinations_num):
         lfsr.next()
         segment_index = int(''.join(map(str, lfsr.state)), 2) % total_segments
         segment_indices.append(segment_index)
 
-    # Returning the indices of the original segments
+    # Returning the indices of the original segments (the ones most likely to be correct)
+    # not a 100 percent guarantee
     return segment_indices
+
+
+def update_droplet(data: str, indices: List[int], inferred_segments: Dict[str, List[int]]):
+    
+    # if the droplet contains segments that are already inferred
+    # remove them from the identity list of the droplet
+
+    for index in indices:
+        if index in inferred_segments:  # xor these segments
+            inferred_data = ''.join(map(str, inferred_segments[index]))
+            data = xor_strings([data, inferred_data])
+
+    # remove them from the identity list of the droplet
+    remaining = [index for index in indices if index not in inferred_segments]
+
+    # Second, if the droplet has only one segment left in the list, the algorithm will set the segment
+    # to the droplet's data payload.
+    if len(remaining) == 1:
+        inferred_segments[remaining[0]] = [int(bit) for bit in data]
+
+    return inferred_segments
+
+
+def recursively_infer_segments(oligos: List[OligoData], inferred_segments: dict, total_segments: int, segment_size: int, seed_size: int, poly: List[int]) -> dict:
+
+    new_inferences = False
+    prior_inferred_count = len(inferred_segments)
+    for oligo in oligos:
+        segment_indices = get_segment_indices(oligo, total_segments, segment_size, seed_size, poly)
+        droplet_data, _, _ = decode_droplet(oligo,segment_size, seed_size, poly)
+        inferred_segments = update_droplet(droplet_data, segment_indices, inferred_segments)
+    if len(inferred_segments) > prior_inferred_count:
+        new_inferences = True
+    print(f'inferred after iter: {len(inferred_segments)}')
+    if new_inferences:
+        return recursively_infer_segments(oligos, inferred_segments, total_segments, segment_size, seed_size, poly)
+    else:
+        return inferred_segments
+
+# Example usage:
+# inferred_segments = recursively_infer_segments(oligos, {}, total_segments, segment_size, seed_size, poly)
+
+def recover_file_with_repeated_passes(oligos: List[OligoData], total_segments: int, segment_size: int, seed_size: int, poly: List[int], max_passes: int) -> List[int]:
+    inferred_segments = {}
+    pass_count = 0
+
+    while pass_count < max_passes and len(inferred_segments) < total_segments:
+        pass_count += 1
+        # print(f"Pass {pass_count}: Starting with {len(inferred_segments)} inferred segments")
+        inferred_segments = recursively_infer_segments(oligos, inferred_segments, total_segments, segment_size, seed_size, poly)
+
+    return inferred_segments
+
