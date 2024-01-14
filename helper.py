@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict
 
 def change_char(initial: str, index: int, new_char: str):
     # Create a new string with the desired modification
@@ -23,12 +23,24 @@ def xor_strings(elems: List[str]) -> str:
         current_res = [str(int(a) ^ int(b)) for a,b in zip(current_res, elem)]
     return ''.join(current_res)
 
+def dict_unsorted_to_list(data: Dict[str, List[int]], total_len: int, segment_size: int) -> List[int]:
+    sorted_dict = dict(sorted(data.items()))
+    output: List[List[int]] = []
 
-def update_droplet_data(droplet_data: str, inferred_segments: dict, segment_indices: List[int]) -> str:
-    """Update droplet data by XOR-ing with inferred segments."""
-    for idx in segment_indices:
-        if idx in inferred_segments:
-            segment_data_binary = ''.join(map(str, inferred_segments[idx]))
-            # Assuming segment_data_binary is a binary string of length segment_size
-            droplet_data = xor_strings([droplet_data, segment_data_binary])
-    return droplet_data
+    for i in range(total_len):
+        if i not in sorted_dict:
+            output.extend([0]*segment_size)
+        else:
+            output.extend(data[i])
+    return output
+        
+
+def calc_similarity(input: List[int], output: List[int]):
+    counter = 0
+    for i in range(len(output)):
+        if output[i] == input[i]:
+            counter += 1
+    return counter/len(input)
+
+
+

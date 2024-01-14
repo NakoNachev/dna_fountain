@@ -13,16 +13,16 @@ from decoder import recursively_infer_segments, recover_file_with_repeated_passe
 from models import DropletData, DropletRecovery, OligoData
 
 segment_size = 4
-# initial_seed = [1, 0, 0, 0]
-# initial_seed = [1,0]
+initial_seed = [1, 0, 0, 0]
+# initial_seed = [0,1]
 # initial_seed = [1,0,0,0,0,0,0,0,0,0]
-initial_seed = [1] + [0]*31
+# initial_seed = [1] + [0]*31
 seed_size = len(initial_seed)
 initial_seed_paper = bin(42)[2:].zfill(32)  # 42 as 32-bit binary
-# poly = [4, 3]  # for x^4 + x^3 + 1 polynomial
+poly = [4, 3]  # for x^4 + x^3 + 1 polynomial
 # poly = [10,7,5,2,1]
 # poly = [2,1]
-poly = [32, 30, 26, 25]   # FOR x^32 + x^30 + x^26 + x^25 + 1 polynomial
+# poly = [32, 30, 26, 25]   # FOR x^32 + x^30 + x^26 + x^25 + 1 polynomial
 lfsr = None
 soliton_distribution = None
 
@@ -130,7 +130,7 @@ def has_high_gc_content(sequence: str) -> bool:
 
 
 def oligo_creation(segments: List[List[int]]) -> List[OligoData]:
-    desired_oligo_len = len(segments)*1.1
+    desired_oligo_len = len(segments)*1.5
     oligos: List[OligoData] = []
     while len(oligos) < desired_oligo_len:
         oligo: OligoData = luby_trfm(segments)
@@ -158,8 +158,9 @@ def segment_interference():
 def main():
     global segment_size, initial_seed, poly, lfsr, soliton_distribution
     lfsr = LFSR(initstate=initial_seed, fpoly=poly)
-    data = input.picture_short
-    segments = preprocess(data, segment_size)
+    initial = input.picture_minimal
+    # image_creator.create_image_from_arr(initial,"logo_short", 'input')
+    segments = preprocess(initial, segment_size)
     # calculate soliton distribution
     soliton_distribution = robust_soliton_distribution(K=len(segments), c=0.025, delta=0.001)
 
@@ -169,7 +170,12 @@ def main():
 
     data = recover_file_with_repeated_passes(oligos, len(segments), segment_size, seed_size, poly, 10)
     print(f'final processed count {len(data)} / {len(segments)}')
-    print(dict(sorted(data.items())))
+    fixed = helper.dict_unsorted_to_list(data, len(segments), segment_size)
+    if len(fixed) > len(initial):
+        fixed = fixed[:len(initial)]
+    # image_creator.create_image_from_arr(fixed, "logo_short", 'output')
+    print(f'similarity {helper.calc_similarity(initial, fixed)}')
+    # print(dict(sorted(data.items())))
     # decoder.start(recovered_droplets)
     # decode_and_write_to_file(oligos)
 

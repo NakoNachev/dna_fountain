@@ -24,8 +24,8 @@ def robust_soliton_distribution(K, c, delta):
 
 
 def test_robust_soliton_distribution():
-    K = 553
-    c = 0.9
+    K = 300
+    c = 0.5
     delta = 0.001
     distribution = robust_soliton_distribution(K, c, delta)
 
