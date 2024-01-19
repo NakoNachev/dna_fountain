@@ -3,6 +3,8 @@ from pylfsr import LFSR
 import reedsolo
 from models import OligoData
 from helper import xor_strings
+from collections import Counter
+
 
 def check_reed_solomon_error(error_correcting_code: str):
     rs = reedsolo.RSCodec(1)
@@ -12,12 +14,22 @@ def check_reed_solomon_error(error_correcting_code: str):
     except reedsolo.ReedSolomonError:
         return True
 
+def preprocess_oligos(oligos: List[OligoData]):
+    counts = Counter([oligo.oligo for oligo in oligos])
+    preprocessed_oligos = []
+
+    sorted_oligos = sorted(counts.items(), key=lambda x: x[1], reverse=True)
+    for oligo in sorted_oligos:
+        original_oligo = [o for o in oligos if o.oligo == oligo[0] ]
+        preprocessed_oligos.append(original_oligo[0])
+    return preprocessed_oligos
+
 
 def init_lfsr_from_seed(seed: List[int], poly: List[int]) -> LFSR:
     return LFSR(initstate=seed, fpoly=poly)
 
 
-def decode_droplet(oligo: OligoData, segment_size: int, seed_size: int, poly: List[int]):
+def decode_oligo(oligo: OligoData, segment_size: int, seed_size: int, poly: List[int]):
     mapping = {
         'A': '00',
         'C': '01',
@@ -35,7 +47,7 @@ def decode_droplet(oligo: OligoData, segment_size: int, seed_size: int, poly: Li
     return data, seed_int, poly
 
 def get_segment_indices(oligo: OligoData, total_segments: int, segment_size: int, seed_size: int, poly: List[int]) -> List[int]:
-    data, seed_int, poly = decode_droplet(oligo, segment_size, seed_size, poly)
+    _, seed_int, poly = decode_oligo(oligo, segment_size, seed_size, poly)
     lfsr = init_lfsr_from_seed(seed_int, poly)
 
     # extracts index from the current state of the seed
@@ -73,22 +85,20 @@ def update_droplet(data: str, indices: List[int], inferred_segments: Dict[str, L
 
 def recursively_infer_segments(oligos: List[OligoData], inferred_segments: dict, total_segments: int, segment_size: int, seed_size: int, poly: List[int]) -> dict:
 
+    # preprocessed_oligos = preprocess_oligos(oligos)
     new_inferences = False
     prior_inferred_count = len(inferred_segments)
     for oligo in oligos:
         segment_indices = get_segment_indices(oligo, total_segments, segment_size, seed_size, poly)
-        droplet_data, _, _ = decode_droplet(oligo,segment_size, seed_size, poly)
+        droplet_data, _, _ = decode_oligo(oligo,segment_size, seed_size, poly)
         inferred_segments = update_droplet(droplet_data, segment_indices, inferred_segments)
     if len(inferred_segments) > prior_inferred_count:
         new_inferences = True
-    print(f'inferred after iter: {len(inferred_segments)}')
     if new_inferences:
         return recursively_infer_segments(oligos, inferred_segments, total_segments, segment_size, seed_size, poly)
     else:
         return inferred_segments
 
-# Example usage:
-# inferred_segments = recursively_infer_segments(oligos, {}, total_segments, segment_size, seed_size, poly)
 
 def recover_file_with_repeated_passes(oligos: List[OligoData], total_segments: int, segment_size: int, seed_size: int, poly: List[int], max_passes: int) -> List[int]:
     inferred_segments = {}
@@ -96,7 +106,7 @@ def recover_file_with_repeated_passes(oligos: List[OligoData], total_segments: i
 
     while pass_count < max_passes and len(inferred_segments) < total_segments:
         pass_count += 1
-        # print(f"Pass {pass_count}: Starting with {len(inferred_segments)} inferred segments")
+        print(f"Pass {pass_count}: Starting with {len(inferred_segments)} inferred segments")
         inferred_segments = recursively_infer_segments(oligos, inferred_segments, total_segments, segment_size, seed_size, poly)
 
     return inferred_segments

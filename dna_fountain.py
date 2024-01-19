@@ -10,19 +10,15 @@ import image_creator
 from pylfsr import LFSR
 from soliton import robust_soliton_distribution, ideal_soliton_distribution
 from decoder import recursively_infer_segments, recover_file_with_repeated_passes
-from models import DropletData, DropletRecovery, OligoData
+from models import DropletData, OligoData
 
+
+# default globals, overwritten on start
 segment_size = 4
-initial_seed = [1, 0, 0, 0]
-# initial_seed = [0,1]
-# initial_seed = [1,0,0,0,0,0,0,0,0,0]
-# initial_seed = [1] + [0]*31
+initial_seed = [1] + [0]*31
 seed_size = len(initial_seed)
-initial_seed_paper = bin(42)[2:].zfill(32)  # 42 as 32-bit binary
-poly = [4, 3]  # for x^4 + x^3 + 1 polynomial
-# poly = [10,7,5,2,1]
-# poly = [2,1]
-# poly = [32, 30, 26, 25]   # FOR x^32 + x^30 + x^26 + x^25 + 1 polynomial
+initial_seed_paper = bin(42)[2:].zfill(32)
+poly = [32, 30, 26, 25]   # FOR x^32 + x^30 + x^26 + x^25 + 1 polynomial
 lfsr = None
 soliton_distribution = None
 
@@ -56,10 +52,10 @@ def get_lsfr_seed() -> List[int]:
     """ Uses the created lsfr generator to generate a new seed"""
     global lfsr
     lfsr.next()
-    return lfsr.state
+    return lfsr.state.tolist()
 
 
-def create_droplet_bin(segments: List[List[int]]) -> DropletData:
+def create_droplet_bin_old(segments: List[List[int]]) -> DropletData:
     """ creates a droplet given segments """
     global segment_size
     sample_size = get_rd_choice_from_soliton(len(segments))
@@ -79,6 +75,34 @@ def create_droplet_bin(segments: List[List[int]]) -> DropletData:
     # segments_bitwise_rs = add_reed_solomon(segments_bitwise)
     # return segments_bitwise_rs
     return DropletData(segments_bitwise, sample_size)
+
+
+def create_droplet_bin(segments: List[List[int]]) -> DropletData:
+    global segment_size, poly
+    # Initialize LFSR with a new seed
+    seed = get_lsfr_seed()
+    
+    # Use LFSR to generate segment indices
+    sample_size = get_rd_choice_from_soliton(len(segments))
+    lfsr = LFSR(initstate=seed, fpoly=poly)  # Use an appropriate polynomial
+    # segment_indices = [lfsr.next() for _ in range(sample_size)]
+    segment_indices = []
+    for _ in range(sample_size):
+        lfsr.next()
+        segment_index = int(''.join(map(str, lfsr.state)), 2) % len(segments)
+        segment_indices.append(segment_index)
+    
+    # Combine the selected segments
+    selected_segments = [segments[idx] for idx in segment_indices]
+    segments_bitwise = [sum(bits) % 2 for bits in zip(*selected_segments)]
+
+    # Ensure the combined segment is the correct size
+    if len(segments_bitwise) != segment_size:
+        segments_bitwise = [0]*(segment_size - len(segments_bitwise)) + segments_bitwise
+
+    # Optional: Add error correction code
+    # droplet_data = add_reed_solomon(droplet_data)
+    return DropletData(seed + segments_bitwise, sample_size)
 
 
 def luby_trfm(segments: List[List[int]]) -> OligoData:
@@ -116,7 +140,8 @@ def transform_to_dna(droplet: List[int]) -> str:
 
 
 def has_repetitive_chars(sequence: str):
-    regex = re.compile(r'(.+)\1{' + str(10) + ',}')
+    # for 38 bytes (304 bits) homopolymer runs were <= 3nt, meaning 6 bits
+    regex = re.compile(r'(.+)\1{' + str(4) + ',}')
     match = regex.search(sequence)
     if match:
         return True
@@ -130,10 +155,11 @@ def has_high_gc_content(sequence: str) -> bool:
 
 
 def oligo_creation(segments: List[List[int]]) -> List[OligoData]:
-    desired_oligo_len = len(segments)*1.5
+    desired_oligo_len = len(segments)*1.1
     oligos: List[OligoData] = []
     while len(oligos) < desired_oligo_len:
         oligo: OligoData = luby_trfm(segments)
+        print(f'len {len(oligos)} / total {desired_oligo_len}')
         if oligo:
             oligos.append(oligo)
     return oligos
@@ -144,36 +170,42 @@ def induce_errors(oligos: List[str]):
     oligos[1] = helper.change_char(oligos[1], 2, 'A')
 
 
-def decode_and_write_to_file(oligos: List[str]):
-    # @TODO: implement
-    data = []
-    image_creator.create_image_from_arr(data, 'logo_short')
+def set_globals_picture_minimal():
+    global segment_size, initial_seed, seed_size, poly
+    segment_size = 4
+    initial_seed = [1,0,0,0]
+    seed_size = len(initial_seed)
+    poly = [4,3]
 
 
-def segment_interference():
-    # @TODO: implement
-    pass
-
+def set_globals_picture_short():
+    global segment_size, initial_seed, seed_size, poly
+    segment_size = 4
+    initial_seed = [1] + [0]*31
+    seed_size = len(initial_seed)
+    poly = [32, 30, 26, 25]   # FOR x^32 + x^30 + x^26 + x^25 + 1 polynomial
 
 def main():
     global segment_size, initial_seed, poly, lfsr, soliton_distribution
+    set_globals_picture_short()
     lfsr = LFSR(initstate=initial_seed, fpoly=poly)
-    initial = input.picture_minimal
+    initial = input.picture_short
     # image_creator.create_image_from_arr(initial,"logo_short", 'input')
     segments = preprocess(initial, segment_size)
     # calculate soliton distribution
-    soliton_distribution = robust_soliton_distribution(K=len(segments), c=0.025, delta=0.001)
+    soliton_distribution = robust_soliton_distribution(K=len(segments), c=0.0025, delta=0.001)
 
     # create oligos
     oligos = oligo_creation(segments)
     # induce_errors(oligos)  #@TODO: activate
 
-    data = recover_file_with_repeated_passes(oligos, len(segments), segment_size, seed_size, poly, 10)
+    data = recover_file_with_repeated_passes(oligos, len(segments), segment_size, seed_size, poly, 1)
     print(f'final processed count {len(data)} / {len(segments)}')
     fixed = helper.dict_unsorted_to_list(data, len(segments), segment_size)
     if len(fixed) > len(initial):
         fixed = fixed[:len(initial)]
     # image_creator.create_image_from_arr(fixed, "logo_short", 'output')
+    print(f'final: {fixed}')
     print(f'similarity {helper.calc_similarity(initial, fixed)}')
     # print(dict(sorted(data.items())))
     # decoder.start(recovered_droplets)
