@@ -56,7 +56,7 @@ def get_segment_indices(oligo: OligoData, total_segments: int, segment_size: int
         lfsr.next()
         segment_index = int(''.join(map(str, lfsr.state)), 2) % total_segments
         segment_indices.append(segment_index)
-
+    # print(f'DECODER: indices: {segment_indices}, oligo: {oligo}')
     # Returning the indices of the original segments (the ones most likely to be correct)
     # not a 100 percent guarantee
     return segment_indices

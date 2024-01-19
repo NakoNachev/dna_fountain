@@ -11,7 +11,7 @@ from pylfsr import LFSR
 from soliton import robust_soliton_distribution, ideal_soliton_distribution
 from decoder import recursively_infer_segments, recover_file_with_repeated_passes
 from models import DropletData, OligoData
-
+from concurrent.futures import ProcessPoolExecutor, as_completed
 
 # default globals, overwritten on start
 segment_size = 4
@@ -155,12 +155,12 @@ def has_high_gc_content(sequence: str) -> bool:
 
 
 def oligo_creation(segments: List[List[int]]) -> List[OligoData]:
-    desired_oligo_len = len(segments)*1.1
+    desired_oligo_len = len(segments)*2.6
     oligos: List[OligoData] = []
     while len(oligos) < desired_oligo_len:
         oligo: OligoData = luby_trfm(segments)
-        print(f'len {len(oligos)} / total {desired_oligo_len}')
         if oligo:
+            print(f'len {len(oligos)} / total {desired_oligo_len}')
             oligos.append(oligo)
     return oligos
 
@@ -180,6 +180,13 @@ def set_globals_picture_minimal():
 
 def set_globals_picture_short():
     global segment_size, initial_seed, seed_size, poly
+    segment_size = 32
+    initial_seed = [1] + [0]*31
+    seed_size = len(initial_seed)
+    poly = [32, 30, 26, 25]   # FOR x^32 + x^30 + x^26 + x^25 + 1 polynomial
+
+def set_globals_picture_long():
+    global segment_size, initial_seed, seed_size, poly
     segment_size = 4
     initial_seed = [1] + [0]*31
     seed_size = len(initial_seed)
@@ -187,26 +194,46 @@ def set_globals_picture_short():
 
 def main():
     global segment_size, initial_seed, poly, lfsr, soliton_distribution
-    set_globals_picture_short()
+    use_input = 'short'
+    picture_name = None
+    write_to_file = False
+    initial_input = None
+    if use_input == 'minimal':
+        set_globals_picture_minimal()
+        initial_input = input.picture_minimal
+    elif use_input == 'short':
+        set_globals_picture_short()
+        picture_name = "logo_short"
+        write_to_file = True
+        initial_input = input.picture_short
+    elif use_input == 'long':
+        set_globals_picture_long()
+        picture_name = "logo_long"
+        write_to_file = True
+        initial_input = input.picture_long
+
     lfsr = LFSR(initstate=initial_seed, fpoly=poly)
-    initial = input.picture_short
-    # image_creator.create_image_from_arr(initial,"logo_short", 'input')
-    segments = preprocess(initial, segment_size)
-    # calculate soliton distribution
-    soliton_distribution = robust_soliton_distribution(K=len(segments), c=0.0025, delta=0.001)
+    if write_to_file:
+        image_creator.create_image_from_arr(initial_input, picture_name, 'input')
+    segments = preprocess(initial_input, segment_size)
+    soliton_distribution = robust_soliton_distribution(K=len(segments), c=0.2, delta=0.001)
 
     # create oligos
     oligos = oligo_creation(segments)
+    print(f'oligos {oligos}')
     # induce_errors(oligos)  #@TODO: activate
 
     data = recover_file_with_repeated_passes(oligos, len(segments), segment_size, seed_size, poly, 1)
     print(f'final processed count {len(data)} / {len(segments)}')
     fixed = helper.dict_unsorted_to_list(data, len(segments), segment_size)
-    if len(fixed) > len(initial):
-        fixed = fixed[:len(initial)]
-    # image_creator.create_image_from_arr(fixed, "logo_short", 'output')
+    if len(fixed) > len(initial_input):
+        fixed = fixed[:len(initial_input)]
+    
+    
+    if write_to_file:
+        image_creator.create_image_from_arr(fixed, picture_name, 'output')
     print(f'final: {fixed}')
-    print(f'similarity {helper.calc_similarity(initial, fixed)}')
+    print(f'similarity {helper.calc_similarity(initial_input, fixed)}')
     # print(dict(sorted(data.items())))
     # decoder.start(recovered_droplets)
     # decode_and_write_to_file(oligos)
