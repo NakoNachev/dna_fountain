@@ -15,11 +15,13 @@ def check_reed_solomon_error(error_correcting_code: str):
         return True
 
 def preprocess_oligos(oligos: List[OligoData]):
+    """ Removes duplicates of the oligos and puts the ones with the most appearances to the front"""
     counts = Counter([oligo.oligo for oligo in oligos])
     preprocessed_oligos = []
 
     sorted_oligos = sorted(counts.items(), key=lambda x: x[1], reverse=True)
     for oligo in sorted_oligos:
+        # has to be converted based on type back to OligoData
         original_oligo = [o for o in oligos if o.oligo == oligo[0] ]
         preprocessed_oligos.append(original_oligo[0])
     return preprocessed_oligos
@@ -56,7 +58,6 @@ def get_segment_indices(oligo: OligoData, total_segments: int, segment_size: int
         lfsr.next()
         segment_index = int(''.join(map(str, lfsr.state)), 2) % total_segments
         segment_indices.append(segment_index)
-    # print(f'DECODER: indices: {segment_indices}, oligo: {oligo}')
     # Returning the indices of the original segments (the ones most likely to be correct)
     # not a 100 percent guarantee
     return segment_indices
@@ -85,10 +86,10 @@ def update_droplet(data: str, indices: List[int], inferred_segments: Dict[str, L
 
 def recursively_infer_segments(oligos: List[OligoData], inferred_segments: dict, total_segments: int, segment_size: int, seed_size: int, poly: List[int]) -> dict:
 
-    # preprocessed_oligos = preprocess_oligos(oligos)
+    preprocessed_oligos = preprocess_oligos(oligos)
     new_inferences = False
     prior_inferred_count = len(inferred_segments)
-    for oligo in oligos:
+    for oligo in preprocessed_oligos:
         segment_indices = get_segment_indices(oligo, total_segments, segment_size, seed_size, poly)
         droplet_data, _, _ = decode_oligo(oligo,segment_size, seed_size, poly)
         inferred_segments = update_droplet(droplet_data, segment_indices, inferred_segments)

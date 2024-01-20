@@ -6,9 +6,6 @@ from PIL import Image
 
 picture_height = None
 picture_width = None
-save_filepath = "C://Users//nakon//Desktop//Docs//uni//master sem 7//datenmanagement//py_code//seminarquellcode//seminar"
-save_filename = "decoded_picture2"
-save_filename_binary = "decoded_binary_seq.txt"
 
 def init_settings(picture_name: str):
     global picture_width, picture_height
@@ -24,11 +21,9 @@ def create_image_from_arr(data: List[int], picture_name: str, filename: str):
     global picture_width, picture_height
     init_settings(picture_name)
     image_1_bit_list = [255 if element != 0 else 0 for element in data]
-    # print(f'image_1_bit_list {image_1_bit_list}')
 # Liste mit Arrays der Bildgrößen erstellen
     picture_list = lambda image_1bit_list, wide: [image_1_bit_list[i:i + wide] for i in range(0, len(image_1_bit_list), wide)]
     final_picture_list = picture_list(image_1_bit_list, picture_width)
-    # print(f'final_picture_list {final_picture_list}')
     # in Numpy Array umwandeln
     image_np_array = np.array(final_picture_list)
 

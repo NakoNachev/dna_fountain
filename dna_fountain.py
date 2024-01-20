@@ -38,7 +38,7 @@ def preprocess(data: List[int], segment_len: int):
     return segments
 
 
-def get_rd_choice_from_soliton(K: int):
+def get_rd_choice_from_soliton(K: int) -> int:
     ''' get a random number of segments to join by using the generated distribution from soliton
         K is the total number of segments'''
     global soliton_distribution
@@ -79,21 +79,20 @@ def create_droplet_bin_old(segments: List[List[int]]) -> DropletData:
 
 def create_droplet_bin(segments: List[List[int]]) -> DropletData:
     global segment_size, poly
-    # Initialize LFSR with a new seed
     seed = get_lsfr_seed()
     
     # Use LFSR to generate segment indices
     sample_size = get_rd_choice_from_soliton(len(segments))
     lfsr = LFSR(initstate=seed, fpoly=poly)  # Use an appropriate polynomial
-    # segment_indices = [lfsr.next() for _ in range(sample_size)]
     segment_indices = []
     for _ in range(sample_size):
         lfsr.next()
+        # indices should be based on the indices in the input data
         segment_index = int(''.join(map(str, lfsr.state)), 2) % len(segments)
         segment_indices.append(segment_index)
     
     # Combine the selected segments
-    selected_segments = [segments[idx] for idx in segment_indices]
+    selected_segments = [segments[id] for id in segment_indices]
     segments_bitwise = [sum(bits) % 2 for bits in zip(*selected_segments)]
 
     # Ensure the combined segment is the correct size
@@ -139,7 +138,7 @@ def transform_to_dna(droplet: List[int]) -> str:
     return ''.join(two_bits_mapped)
 
 
-def has_repetitive_chars(sequence: str):
+def has_repetitive_chars(sequence: str) -> bool:
     # for 38 bytes (304 bits) homopolymer runs were <= 3nt, meaning 6 bits
     regex = re.compile(r'(.+)\1{' + str(4) + ',}')
     match = regex.search(sequence)
@@ -154,23 +153,23 @@ def has_high_gc_content(sequence: str) -> bool:
     return gc_cnt / len(sequence) >= gc_threshhold
 
 
-def oligo_creation(segments: List[List[int]]) -> List[OligoData]:
-    desired_oligo_len = len(segments)*2.6
+def oligo_creation(segments: List[List[int]], segments_multiplier: int) -> List[OligoData]:
+    desired_oligo_len = len(segments)*segments_multiplier
     oligos: List[OligoData] = []
     while len(oligos) < desired_oligo_len:
         oligo: OligoData = luby_trfm(segments)
         if oligo:
-            print(f'len {len(oligos)} / total {desired_oligo_len}')
+            print(f'Generating oligos {len(oligos)} / total {desired_oligo_len}')
             oligos.append(oligo)
     return oligos
 
 
-def induce_errors(oligos: List[str]):
+def induce_errors(oligos: List[str]) -> None:
     oligos[1] = helper.change_char(oligos[1], 1, 'A')
     oligos[1] = helper.change_char(oligos[1], 2, 'A')
 
 
-def set_globals_picture_minimal():
+def set_globals_picture_minimal() -> None:
     global segment_size, initial_seed, seed_size, poly
     segment_size = 4
     initial_seed = [1,0,0,0]
@@ -178,39 +177,48 @@ def set_globals_picture_minimal():
     poly = [4,3]
 
 
-def set_globals_picture_short():
+def set_globals_picture_short() -> None:
     global segment_size, initial_seed, seed_size, poly
     segment_size = 32
     initial_seed = [1] + [0]*31
     seed_size = len(initial_seed)
     poly = [32, 30, 26, 25]   # FOR x^32 + x^30 + x^26 + x^25 + 1 polynomial
 
-def set_globals_picture_long():
+def set_globals_picture_long() -> None:
     global segment_size, initial_seed, seed_size, poly
     segment_size = 4
     initial_seed = [1] + [0]*31
     seed_size = len(initial_seed)
     poly = [32, 30, 26, 25]   # FOR x^32 + x^30 + x^26 + x^25 + 1 polynomial
 
-def main():
-    global segment_size, initial_seed, poly, lfsr, soliton_distribution
-    use_input = 'short'
-    picture_name = None
-    write_to_file = False
-    initial_input = None
-    if use_input == 'minimal':
+def init_settings(input_to_use: str) -> (List[int], str, bool):
+    initial_input, picture_name, write_to_file, segments_multiplier = None, None, None, 1.2
+    if input_to_use == 'minimal':
         set_globals_picture_minimal()
         initial_input = input.picture_minimal
-    elif use_input == 'short':
+        segments_multiplier = 5
+    elif input_to_use == 'short':
         set_globals_picture_short()
         picture_name = "logo_short"
         write_to_file = True
         initial_input = input.picture_short
-    elif use_input == 'long':
+        segments_multiplier = 3.5
+    elif input_to_use == 'long':
         set_globals_picture_long()
         picture_name = "logo_long"
         write_to_file = True
         initial_input = input.picture_long
+        segments_multiplier = 3
+    return initial_input, picture_name, write_to_file, segments_multiplier
+
+def main():
+    global segment_size, initial_seed, poly, lfsr, soliton_distribution
+    input_to_use = 'short'
+    initial_input = None
+    picture_name = None
+    write_to_file = False
+    segments_multiplier = 1.2
+    initial_input, picture_name, write_to_file, segments_multiplier = init_settings(input_to_use)
 
     lfsr = LFSR(initstate=initial_seed, fpoly=poly)
     if write_to_file:
@@ -219,8 +227,7 @@ def main():
     soliton_distribution = robust_soliton_distribution(K=len(segments), c=0.2, delta=0.001)
 
     # create oligos
-    oligos = oligo_creation(segments)
-    print(f'oligos {oligos}')
+    oligos = oligo_creation(segments, segments_multiplier)
     # induce_errors(oligos)  #@TODO: activate
 
     data = recover_file_with_repeated_passes(oligos, len(segments), segment_size, seed_size, poly, 1)
@@ -232,11 +239,7 @@ def main():
     
     if write_to_file:
         image_creator.create_image_from_arr(fixed, picture_name, 'output')
-    print(f'final: {fixed}')
     print(f'similarity {helper.calc_similarity(initial_input, fixed)}')
-    # print(dict(sorted(data.items())))
-    # decoder.start(recovered_droplets)
-    # decode_and_write_to_file(oligos)
 
 
 if __name__ == '__main__':
