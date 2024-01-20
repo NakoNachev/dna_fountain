@@ -80,7 +80,7 @@ def create_droplet_bin_old(segments: List[List[int]]) -> DropletData:
 def create_droplet_bin(segments: List[List[int]]) -> DropletData:
     global segment_size, poly
     seed = get_lsfr_seed()
-    
+
     # Use LFSR to generate segment indices
     sample_size = get_rd_choice_from_soliton(len(segments))
     lfsr = LFSR(initstate=seed, fpoly=poly)  # Use an appropriate polynomial
@@ -90,7 +90,7 @@ def create_droplet_bin(segments: List[List[int]]) -> DropletData:
         # indices should be based on the indices in the input data
         segment_index = int(''.join(map(str, lfsr.state)), 2) % len(segments)
         segment_indices.append(segment_index)
-    
+
     # Combine the selected segments
     selected_segments = [segments[id] for id in segment_indices]
     segments_bitwise = [sum(bits) % 2 for bits in zip(*selected_segments)]
@@ -159,7 +159,8 @@ def oligo_creation(segments: List[List[int]], segments_multiplier: int) -> List[
     while len(oligos) < desired_oligo_len:
         oligo: OligoData = luby_trfm(segments)
         if oligo:
-            print(f'Generating oligos {len(oligos)} / total {desired_oligo_len}')
+            print(f'Generating oligos {
+                  len(oligos)} / total {desired_oligo_len}')
             oligos.append(oligo)
     return oligos
 
@@ -172,9 +173,9 @@ def induce_errors(oligos: List[str]) -> None:
 def set_globals_picture_minimal() -> None:
     global segment_size, initial_seed, seed_size, poly
     segment_size = 4
-    initial_seed = [1,0,0,0]
+    initial_seed = [1, 0, 0, 0]
     seed_size = len(initial_seed)
-    poly = [4,3]
+    poly = [4, 3]
 
 
 def set_globals_picture_short() -> None:
@@ -184,12 +185,14 @@ def set_globals_picture_short() -> None:
     seed_size = len(initial_seed)
     poly = [32, 30, 26, 25]   # FOR x^32 + x^30 + x^26 + x^25 + 1 polynomial
 
+
 def set_globals_picture_long() -> None:
     global segment_size, initial_seed, seed_size, poly
     segment_size = 4
     initial_seed = [1] + [0]*31
     seed_size = len(initial_seed)
     poly = [32, 30, 26, 25]   # FOR x^32 + x^30 + x^26 + x^25 + 1 polynomial
+
 
 def init_settings(input_to_use: str) -> (List[int], str, bool):
     initial_input, picture_name, write_to_file, segments_multiplier = None, None, None, 1.2
@@ -211,6 +214,7 @@ def init_settings(input_to_use: str) -> (List[int], str, bool):
         segments_multiplier = 3
     return initial_input, picture_name, write_to_file, segments_multiplier
 
+
 def main():
     global segment_size, initial_seed, poly, lfsr, soliton_distribution
     input_to_use = 'short'
@@ -218,25 +222,28 @@ def main():
     picture_name = None
     write_to_file = False
     segments_multiplier = 1.2
-    initial_input, picture_name, write_to_file, segments_multiplier = init_settings(input_to_use)
+    initial_input, picture_name, write_to_file, segments_multiplier = init_settings(
+        input_to_use)
 
     lfsr = LFSR(initstate=initial_seed, fpoly=poly)
     if write_to_file:
-        image_creator.create_image_from_arr(initial_input, picture_name, 'input')
+        image_creator.create_image_from_arr(
+            initial_input, picture_name, 'input')
     segments = preprocess(initial_input, segment_size)
-    soliton_distribution = robust_soliton_distribution(K=len(segments), c=0.2, delta=0.001)
+    soliton_distribution = robust_soliton_distribution(
+        K=len(segments), c=0.2, delta=0.001)
 
     # create oligos
     oligos = oligo_creation(segments, segments_multiplier)
     # induce_errors(oligos)  #@TODO: activate
 
-    data = recover_file_with_repeated_passes(oligos, len(segments), segment_size, seed_size, poly, 1)
+    data = recover_file_with_repeated_passes(
+        oligos, len(segments), segment_size, seed_size, poly, 1)
     print(f'final processed count {len(data)} / {len(segments)}')
     fixed = helper.dict_unsorted_to_list(data, len(segments), segment_size)
     if len(fixed) > len(initial_input):
         fixed = fixed[:len(initial_input)]
-    
-    
+
     if write_to_file:
         image_creator.create_image_from_arr(fixed, picture_name, 'output')
     print(f'similarity {helper.calc_similarity(initial_input, fixed)}')
