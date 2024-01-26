@@ -1,0 +1,281 @@
+\documentclass[12pt]%[english]
+{article}
+
+\usepackage{graphicx}
+\usepackage{microtype}
+\usepackage[nonumberlist, acronym, toc, section]{glossaries}
+\usepackage{cite} 
+\usepackage{hyperref}
+
+
+\newglossary[slg]{symbolslist}{syi}{syg}{Symbols}
+
+\makeglossaries
+
+%commands for symbols
+\newglossaryentry{symb:Pi}{
+name=$\pi$,
+description={You know it.},
+sort=symbolpi, type=symbolslist
+}
+\newglossaryentry{symb:Phi}{
+name=$\varphi$,
+description={At vero eos et accusam et justo duo dolores et ea rebum..},
+sort=symbolphi, type=symbolslist
+}
+\newglossaryentry{symb:Lambda}{
+name=$\lambda$,
+description={Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy.},
+sort=symbollambda, type=symbolslist
+}
+ 
+%commands for abbreviations
+\newacronym{MS}{MS}{Microsoft}
+\newacronym{CD}{CD}{Compact Disc}
+
+% ...
+
+%abbreviations and glossary combined
+\newacronym{AD}{AD}{Active Directory\protect\glsadd{glos:AD}}
+ 
+% ... 
+ 
+%glossary commands
+
+\newglossaryentry{glos:AD}{
+name=Active Directory,
+description={At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet}
+}
+
+\newglossaryentry{glos:F}{name=File, description={An arbitrary file}}
+
+% ...
+
+\begin{document}
+
+\begin{titlepage}
+
+\begin{center}
+
+{\Huge %\bfseries
+ 
+{%\textbf{
+\textsc{Title}}}
+%}
+\\[2ex]
+
+{\large %\bfseries 
+
+{Subtitle}}\\[0.5cm]
+%\rule{\textwidth}{1pt}
+
+
+\textbf{
+\Large Seminar Datenmanagement\\ 
+Prof. Dr. Lena Wiese \\ 
+Semester 7
+}
+
+\includegraphics[scale=0.4]{logo.jpg} \\ 
+\large{\textbf{Institute of Computer Science \\ Goethe-Universit\"at Frankfurt a. M.}}
+
+
+
+\begin{Large}
+\begin{tabular}{ll}
+Author: & \textsc{Nako Nachev} \\
+& 6464679\\
+& s6327063@stud.uni-frankfurt.de \\
+Degree:&  Master Informatik, Semester 7 \\
+Module ID: & DM-MS, M-DS-S, DM-BS, B-ATAI-S \\
+Date: & \today \\		
+\end{tabular}
+\end{Large}
+
+\end{center}
+
+\vspace*{\fill}
+
+\large
+\noindent{}Work based on: \\
+\begin{itemize}
+\item Paper 1: \emph{Put Original Author Names here} Put Original Title(s) here
+\item Paper 2: \emph{Put Original Author Names here} Put Original Title(s) here
+\item ...
+\end{itemize}
+
+
+\end{titlepage}
+
+\newpage\thispagestyle{empty}~ %empty page
+\newpage 
+
+\begin{abstract}
+\end{abstract}
+
+\newpage
+
+\tableofcontents
+
+\newpage
+
+\section{Introduction}
+
+\subsection{Summary Overview Paper}
+
+The paper in \cite{mercier2010survey} provides a detailed survey about different error correcting codes, their implementation
+and associated obstacles with each of the codes. The paper begins by examing the historical significance of error synchronisation problems in
+communication systems dating back to Samuel Morse, which remain an important topic even in todays technological systems. Although often treated as
+different problems, synchronisation and additive noise tend to have the same effect on communcation channels by reducing their capacity.According to the 
+article, designing error-correcting codes to tackle these problems proves to be quite challenging, with many techniques implementation not based on coding or even 
+failing to mention synchronisation-correcting codes. \\
+ This article continues with a brief introduction on the error-correcting codes and explaining the 
+different preliminaries associated with the survey. Such preliminaries include the mathematical notations used, the different types of synchronisation errors and their definitions.
+These range from deletion errors, insertion errors, duplication or repetition errors to bitshift errors. Last but not least, obstacles associated with the 
+error correcting codes are described. Examples of such are huge bursts of substition errors, splitting long messages of data into blocks of with block boundaries
+sometimes being unknown to receiver or codes being unable to keep the same correction capability when encoding several blocks. The authors describe in section III different 
+synchronisation-correcting codes, how they are implemented, the historic research done by various authors and specific limitations for the different types. The section starts
+with binary algebraic block codes using (0,1) alphabets, nonbinary and perfect codes, codes capable of correcting bursts of synchronisation errors, synchronizable, marker codes, codes for weak
+synchronisation errors, convolutional codes, expurgated and codes for random synchronisation channels. \\
+The last section of the paper discusses future directions of synchronisation error-correcting codes. Binary block codes are currently unable to detect more than one synchronisation
+errors per block. Further challenges arize in estimating the capacity of channels corrupted by synchronisation errors and such where random deletion and/or insertion errors can occur.
+According to the authors, none of the codes described in the paper have all the properties required to be used in pratical communication systems. One solution could be concatenating different
+coding schemes in order to use the strengths of the various codes for their specific implementation use cases. \\
+Deriving from the examples in the article from above, one could divide the error-correcting codes in multiple different categories. One separation used could be based on the number of symbols used in the alphabet - either binary alphabet consisting of (0,1)* symbols or non-binary with 2 or more symbols. Another categorization could follow based on other characteristics - such as block codes vs convolutional codes. Block codes break the data down to fixed-sized blocks and append protective or unique bits for error handling. Convolutional codes on the other side process the data continuously as a stream and do not split the data into blocks. Error correction here is done on the fly. \\
+As far as characteristics of the error-correcting codes are concerned, performance, redundancy, error detection and correction seem to be the most important ones. Redundancy finds its application in appending the extra bits for the receiver to make use of and identify errors that may have happended during the transmition. Performance concerns the rate at which algorithms are able to correct the data, where similar to most systems a good balance between correctness achived and computation should be achieved. Error detection and correction seems to be closely related and are the general characteristics the prove how valuable a given error-correcting code is. \\
+There are various implementations of error-correcting codes. One such example is by using error-correcting output coding for improving text classification and thus reducing text classification errors by 66 percent.\cite{ghani2000using} Another example is by using error-correcting codes for real time communication in wireless networks. \cite{elaoud1998adaptive} The authors simulate using an adaptive scheme for reducing bandwidth overhead by comparing it to a single code scheme.
+
+
+\subsection{Important Terms and Definitions}
+
+Upon reading the overview paper, following important terms and definitions could be listed based on the information in \cite{mercier2010survey}:
+\begin{itemize}
+\item synchronisation error - it is either a delition or an insertion error and excludes substitution errors. For example transmitting 0011 instead of 00011 is a deletion error and transmitting 0011 instead of 011 - insertion error.
+\item duplication or repetition error - it is a special insertion that replaces a bit by two copies of the same bit.
+\item bitshift error - it a special kind of error that might reverse a given string - for example 01 being transmitted as 10.
+\item additive noise - disturbances or interference when transmitting signal over a communication network
+\item redundancy - additional information introduced by error-correcting codes to correction synchronisation errors
+\item run - a substring of identical symbols of maximum length
+\item blocks - used to form chunks of words that are used to divide long messages
+\end{itemize}
+
+\section{In-Depth Explanation of Error-correcting Code Chosen}
+
+Current storage medias do not have the capacity to meet the demand for the total amount of worldwide data. On top of that, the costs for maintaining and transferring data tend to increase as well, therefore better solutions are needed \cite{dong2020dna}. One such promising solution are the innovate DNA storage systems. They enable us to store digital data into DNA molecules, which are syntetically syntesized and far exceed the lifespan of general storage mediums \cite{dong2020dna}. But transfering and storing data comes with its complications and certain errors could appear, leading to corrupted or incomplete data. Thus, solutions are needed for correcting these errors. The storing strategy provided in \cite{erlich2017dna} makes use of the so called DNA fountains. Fountain codes are typically used for channels with erasures, where files are split into packets and each of these packets is either received without errors or dropped \cite{mackay2005fountain}.  Standard transfer protocols keep transmitting packets until they are successfully received from the other side, where another channel is also required to keep track of the state of transmitted packets or those that require restransmission. Fountain codes on the other side create packets as a result of functions of the whole file and the receiver only has to collect any N packets, with $N \textgreater K$ (original size) so that the whole file can be recovered.In the methaphorical sense, a dna fountain generates droplets/drops (packets) und everyone who wants to collect these drops has to put a bucket under the fountain and wait until the amount collected is larger than original size K of the data \cite{mackay2005fountain}. Due to the nature of the fountain, such DNA fountains can be classified as rateless, since the number of packets generated could be limitless. \\
+The strategy for data storage using DNA fountains proposed in \cite{erlich2017dna} splits the encoding process into three steps. The first step is the preprocessing stage, where the binary file provided as input is split into segmets of identical length. A simple example would be splitting the code 001001100101 into segments of length 4, which would result in:
+\begin{itemize}
+\item Segment 1: 0010
+\item Segment 2: 0110
+\item Segment 3: 0101
+\end{itemize}
+
+The second step of the stragy is the so-called \textbf{luby-transform stage}. The segments generated  in the first step are sampled randomly using a robust soliton distribution \cite{yao2016poisson} and than added bitwise together. In the same time, a random seed is generated //TODO: probably add an explanation for the lfsr and after that attached to the result of the bitwise addition, thus forming the final droplet. One simple example might be:
+
+\begin{itemize}
+\item Choose two random segments: 0010 and 0110
+\item Apply bitwise addition: \[
+\begin{array}{c@{}c@{}c@{}c@{}c}
+  & 0 & 0 & 1 & 0 \\
+\oplus & 0 & 1 & 1 & 0 \\
+\hline
+  & 0 & 1 & 0 & 0 \\
+\end{array}
+\]
+\item Generate random seed: 11
+\item Attach seed to the result of the bitwise addition to form the droplet: 110101
+\end{itemize}
+The luby transform stage concludes with the screening stage. This stage first converts the achieved droplet to DNA using the following convertion rules: \{00,01,10,11\} to \{A,C,G,T\}. After that, the result dna sequence is screened against invalid sequences, such a homopolymer runs or GC content. Long homopolymer runs and or sequences with high GC concentration are undesirable \cite{erlich2017dna} due to being more difficult to syntesize or are more prone to sequencing errors. DNA sequences containing one of the above described properties are rejected and those that pass added to the oligo design file. Below is the screening stage described with continuation of the example above:
+
+\begin{itemize}
+\item Convert the droplet to a DNA sequence: $110101 \rightarrow TCC$
+\item Check against screening rules: TCC does not contain long homopolymer runs or high \% GC content, therefore does not get rejected
+\item The oligo file now contains the droplet TCC
+\end{itemize}
+
+Apart from the seed and payload, the final droplet also needs redundancy in order to be able to correct various errors that may appear during the syntesizing process. This is where Reed-Solomon codes (R-S) come into place. Reed-Solomon codes are nonbinary cyclic codes with symbols up to m-bit, with m being any positive integer having a value greater than 2. R-S (n,k) codes of m-bit symbols comply to the following rules:
+\begin{center}
+
+$0 \textless k \textless n \textless 2^m +2$
+
+\end{center}
+
+with k being the number of symbols encoded and n the total number of symbols in the encoded block \cite{sklar2001reed}. Furthermore, R-S(n,k) codes also include parity symbols:
+
+\begin{center}
+
+$(n,k)=(2^m - 1, 2^m -1 - 2t)$
+
+\end{center}
+
+with $2t = n - k$ being the number of parity symbols \cite{sklar2001reed}. For example a R-S(5,3) 3-bit code  contains 5 code word bytes, of which 3 are data and 2 parity (n-k).Therefore, this code is capable of correcting up to $2t=2   => t = 1$ errors.
+
+\begin{itemize}
+\item Read papers on your chosen  Error-correcting Code.
+\item Do a search on the Scholar page for more information on the Error-correcting Code.
+\item What approach is proposed? What is the formal definition of the chosen Error-correcting Code? What types of errors can be corrected/detected by the code? 
+\item What (in the opinion of the article authors) makes the presented Error-correcting Code better than other approaches? 
+\end{itemize}
+
+\section{Implementation of  Error-correcting Code Chosen}
+
+\begin{itemize}
+\item Upload your own implementation of the  Error-correcting Code into Moodle.
+\item Run your implementation on the provided benchmark dataset.
+\item Describe your implementation and the benchmark results
+\end{itemize}
+
+\subsection{DNA Fountain implementation}
+
+The suggested in \cite{erlich2017dna} dna fountain method was implemented in python by making use of standard libraries and a couple of extra libraries for ready implementations of the LFSR and RS-Codes. The project contains the following files:
+\begin{itemize}
+\item \texttt{dna\_fountain.py}
+\item decoder.py
+\item helper.py
+\item \texttt{image\_creator.py}
+\item models.py
+\item soliton.py
+\item input.py
+\end{itemize}
+
+The starting point of the project is the \texttt{dna\_fountain.py} file. The file begins by initializing the parameters needed for the soliton distribution and the encoding process. The first step involves choosing the input data to use. For the purpose of the seminar, two different inputs were predefined (\texttt{picture\_short} and \texttt{picture\_long}), both of which are saved in the input.py file. Both inputs are Python lists with 0s and 1s, corresponding to the different bits saved from the pictures. Based on the chosen input, different globals and defaults are created. Examples of such are \texttt{segment\_size}, \texttt{initial\_seed}, polynomial and \texttt{segments\_multiplier}. The function continues by first splitting the input list into multiple segments based on the initialized parameters. If the input file is not divisible by the number of bits per segment due to the chosen segment size, the last segment is filled with 0s on the left side to match the size of the other segments. After the list of segments is created, it is passed to the \texttt{robust\_soliton\_distribution} function from the soliton.py file, which returns the distribution of the values based on the total number of segments generated. Soliton.py also contains a \texttt{ideal\_soliton\_distribution} function, which is not used, but remains an option. \\
+After all defaults, parameters and values are initialized, the oligo creation process via the \texttt{oligo\_creation} functions begins. It first defines the total number of oligos to be generated and starts iterating until the desired number is reached. The \texttt{luby\_transform} function is responsible for the creation of oligos. It first creates a droplet (with the correspondig seed, data payload and RS-Code (if exists)) and checks it against homopolymer runs or high GC content. If any of the conditions are met, the function with not return anything, meaning the iterator has to try again. Otherwise, the function returns the created oligo, and it is passed to the final list. The core of the \texttt{luby\_transform} function is the \texttt{create\_droplet\_bin} function. It creates the seed by using the LFSR with the predefined parameters (seed, polynomial) and chooses a number N of segments to combine, with the help of the generated distribution from the robust soliton implementation.  The seed is then used to generate N indices for random segments of the list, which are XOR-ed together to form the final payload of the droplet. Along the way, different helper functions and models are used. Typical examples of helper functions include binary arrays to bytes, XOR-ing integers or strings or different utility functions, all of which provided in helper.py file. Models.py contains classes representing different types, which, although not necessary in python due to missing static checking, might improve readability and debugging (if necessary). \\
+Once the oligos are created, they are passed, along with other parameters to the decoder.py file. This file starts by preprocessing the oligos. The first two stages of preprocessing, as suggested by \cite{erlich2017dnasupplementary}, involve retaining only sequences of a certain length and collapsing identical sequences and sorting them so that sequences that occur more often are at the front of the list. Since the created oligos are still in string format (due to nucleotides being the letter A,C,G,T), we need to convert the data back to binary. This is achieved via the \texttt{create\_oligo} function, which also extracts the seed, data payload and potential error correcting codes that were appended at the end of the oligo. The described in \cite{erlich2017dna} process does not attempt to make error corrections and for that purpose oligos with errors are dropped and do not fall into the decoding process. Last but not least, the \texttt{recursively\_infer\_segments} function is called, which is the final stage of the decoding process. It iterates through the preprocessed oligos and attempts to infer the segments until no more updates can be made. It finally returns the inferred segments and they are passed back to the \texttt{dna\_fountain.py} file. \\
+The final part of the \texttt{dna\_fountain.py} file is the image creation. The \texttt{image\_creator.py} file is called, which contains a function for generating a .PNG picture based on the returned data (list of 0s and 1s). That way we can compare the output picture to the initial picture and compare whether we have successfully decoded the initial file. Since some of the bits may be different, which most of the time is might not be noticable with a human eye, the \texttt{calc\_similarity} function from the helper.py file can compare both input and output lists and return a value between [0,1] indicating how similar the decoded file is to the initial. Value of 1 means the initial file was decoded without any errors or missing information, anything below it would indicate missing or incorrect data.
+
+
+\subsection{Benchmark Results}
+
+\section{Conclusion}
+
+\begin{itemize}
+\item Summarize the main points and achievements
+\item Add your own assessment/criticism on the topic
+\end{itemize}
+
+
+\textbf{Some Latex-specific hints:}
+
+
+\begin{itemize}
+\item You can use abbreviations, like \gls{AD}, \gls{MS} or \gls{CD}.
+\item There are also symbols like for example \gls{symb:Pi}, \gls{symb:Phi} and \gls{symb:Lambda}.
+\item Last but not least, use glossary entries like \gls{glos:AD} and \gls{glos:F}.
+\item Do not forget to cite related work, like \cite{okman2011security} or \cite{borthakur2011apache}.
+\end{itemize}
+\newpage
+
+%print glossary
+\printglossary[style=altlist,title=Glossary]
+ 
+%print abbreviations
+\printglossary[type=\acronymtype,style=long]
+ 
+%print symbols
+\printglossary[type=symbolslist,style=long]
+
+\newpage
+
+\bibliography{bib}
+\bibliographystyle{unsrt}
+
+\end{document}
