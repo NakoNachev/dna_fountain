@@ -166,6 +166,9 @@ Upon reading the overview paper, following important terms and definitions could
 \item blocks - used to form chunks of words that are used to divide long messages
 \end{itemize}
 
+
+\newpage
+
 \section{In-Depth Explanation of Error-correcting Code Chosen}
 
 Current storage medias do not have the capacity to meet the demand for the total amount of worldwide data. On top of that, the costs for maintaining and transferring data tend to increase as well, therefore better solutions are needed \cite{dong2020dna}. One such promising solution are the innovate DNA storage systems. They enable us to store digital data into DNA molecules, which are syntetically syntesized and far exceed the lifespan of general storage mediums \cite{dong2020dna}. But transfering and storing data comes with its complications and certain errors could appear, leading to corrupted or incomplete data. Thus, solutions are needed for correcting these errors. The storing strategy provided in \cite{erlich2017dna} makes use of the so called DNA fountains. Fountain codes are typically used for channels with erasures, where files are split into packets and each of these packets is either received without errors or dropped \cite{mackay2005fountain}.  Standard transfer protocols keep transmitting packets until they are successfully received from the other side, where another channel is also required to keep track of the state of transmitted packets or those that require restransmission. Fountain codes on the other side create packets as a result of functions of the whole file and the receiver only has to collect any N packets, with $N \textgreater K$ (original size) so that the whole file can be recovered.In the methaphorical sense, a dna fountain generates droplets representing packets of data und everyone who wants to collect these droplets has to put a bucket under the fountain and wait until the amount collected is larger than original size K of the data \cite{mackay2005fountain}. Due to the nature of the fountain, such DNA fountains can be classified as rateless, since the number of packets generated could be limitless.
@@ -231,7 +234,7 @@ Z = \sum_{d} \rho(d) + \beta(d) = 1
 \]
 
 
-After the distributions for the robust soliton distribution are calculated, N segments are sampled at randomly (based on the choice from soliton) and  than added bitwise together. The seed generated from the LFSR is attached to the result of the bitwise addition, thus forming the final droplet. One simple example might be:
+After the distributions for the robust soliton distribution are calculated, N segments are sampled at randomly without replacement (based on the choice from soliton) and  than added bitwise together. The seed generated from the LFSR is attached to the result of the bitwise addition, thus forming the final droplet. One simple example might be:
 
 
 \begin{itemize}
@@ -240,15 +243,9 @@ After the distributions for the robust soliton distribution are calculated, N se
 \item Generate seed: 11
 \item Attach seed to the result of the bitwise addition to form the droplet: 110100
 \end{itemize}
-The luby transform stage concludes with the screening stage. This stage first converts the achieved droplet to DNA using the following convertion rules: \{00,01,10,11\} to \{A,C,G,T\}. After that, the result dna sequence is screened against invalid sequences, such a homopolymer runs or GC content. Long homopolymer runs and or sequences with high GC concentration are undesirable \cite{erlich2017dna} due to being more difficult to syntesize or are more prone to sequencing errors. DNA sequences containing one of the above described properties are rejected and those that pass added to the oligo design file. Below is the screening stage described with continuation of the example above:
 
-\begin{itemize}
-\item Convert the droplet to a DNA sequence: $110101 \rightarrow TCC$
-\item Check against screening rules: TCC does not contain long homopolymer runs or high \% GC content, therefore does not get rejected
-\item The oligo file now contains the droplet TCC
-\end{itemize}
 
-Apart from the seed and payload, the final droplet also needs redundancy in order to be able to correct various errors that may appear during the syntesizing process. This is where Reed-Solomon codes (R-S) come into place. Reed-Solomon codes are nonbinary cyclic codes with symbols up to m-bit, with m being any positive integer having a value greater than 2. R-S (n,k) codes of m-bit symbols comply to the following rules:
+Apart from the seed and payload, extra redundancy can be added to the droplet in order for it to be able to correct various errors that may appear during the syntesizing process. This is where Reed-Solomon codes (R-S) come into place. Reed-Solomon codes are nonbinary cyclic codes with symbols up to m-bit, with m being any positive integer having a value greater than 2. R-S (n,k) codes of m-bit symbols comply to the following rules:
 \begin{center}
 
 $0 \textless k \textless n \textless 2^m +2$
@@ -265,12 +262,50 @@ $(n,k)=(2^m - 1, 2^m -1 - 2t)$
 
 with $2t = n - k$ being the number of parity symbols \cite{sklar2001reed}. For example a R-S(5,3) 3-bit code  contains 5 code word bytes, of which 3 are data and 2 parity (n-k).Therefore, this code is capable of correcting up to $2t=2   => t = 1$ errors.
 
+
+\subsubsection{Screening}
+The luby transform stage concludes with a screening stage.This stage first converts the achieved droplet to DNA using the following convertion rules: \{00,01,10,11\} to \{A,C,G,T\} \cite{erlich2017dnasupplementary}. After that, the result dna sequence is screened against invalid sequences, such a homopolymer runs or GC content. Long homopolymer runs and or sequences with high GC concentration are undesirable \cite{erlich2017dna} due to being more difficult to syntesize or are more prone to sequencing errors. DNA sequences containing one of the above described properties are rejected and those that pass added to the oligo design file. In \cite{erlich2017dna}, the created droplets were 38 bytes (4 bytes for seed, 32 bytes for data payload and 2 bytes for RS code). Therefore, the values for homopolymer runs were set to \(<= 3 nt \) (nucleotides) and 45-55\% GC content, but these values could be changed based on the specific case. Below is the screening stage described with continuation of the example above:
+
 \begin{itemize}
-\item Read papers on your chosen  Error-correcting Code.
-\item Do a search on the Scholar page for more information on the Error-correcting Code.
-\item What approach is proposed? What is the formal definition of the chosen Error-correcting Code? What types of errors can be corrected/detected by the code? 
-\item What (in the opinion of the article authors) makes the presented Error-correcting Code better than other approaches? 
+\item Convert the droplet to a DNA sequence: $110101 \rightarrow TCC$
+\item Check against screening rules: TCC does not contain long homopolymer runs or high \% GC content, therefore does not get rejected
+\item The oligo file now contains the droplet TCC
 \end{itemize}
+
+Since quite a few of the oligos can fail, the authors in \cite{erlich2017dna} recommend aiming for 5-10\% more oligos than input segments. The process of luby transform and screening stage is repeated until that number is reached. 
+
+\newpage
+\subsection{DNA Fountain decoding}
+
+The decoding part of the DNA Fountain encoding strategy consists also of 3 stages - preprocessing, droplet recovery and segment interference.
+
+\subsubsection{Preprocessing}
+
+The preprocessing phase of the decoding process begins by filtering out all sequences that do not equal the predefined length \cite{erlich2017dnasupplementary}. Subsequently, idential sequences are dropped and the number of occurences is stored, ensuring that more prevalent sequences will appear first when sorted. As the decoder may not always need to scan all oligos, some of the singletons (sequences that have been observed only a small number of times) may be omitted and the decoder would not try to decode them. Below is a simple example illustrating the process:
+
+\begin{itemize}
+\item Assume these are the generated oligos from the encoding process: GAT, TAG, CAG, GTC, GAT, AAG, GAT, GGAT, CAG
+\item Step 1: Remove oligos larger than 3nt - GGAT is filtered out
+\item Step 2: Calculate occurrences - GAT: 3, TAG: 1, CAG: 2, GTC: 1, AAG: 1
+\item Step 3: Sort sequences based on occurrence - GAT:3, CAG: 2, TAG: 1, GTC: 1, AAG: 1
+\end{itemize}
+
+\subsubsection{Droplet Recovery}\label{subsec:droplet_recovery}
+
+The second phase of the decoding process is droplet recovery. The generated DNA sequences from the encoding process have to first be translated back into binary using the following scheme, as detailed in  \cite{erlich2017dnasupplementary}: {A,C,G,T}, to {0; 1; 2; 3}. In addition to translating the sequences, the droplet recovery stage must also extract the seed, payload and error-correcting code (if it exists). Unlike other methods, the in \cite{erlich2017dna} described approach does not try to recover sequences with errors. Instead, they are excluded without attempting to correct them. Most of the errors found are mainly due to short insertions and deletions that may result during the oligo synthesis. The Reed Solomon code used in the encoding process is designed to handle only substitution errors, therefore it is not advisable to attempt recovery, as mentioned in \cite{erlich2017dnasupplementary}.
+
+
+\subsubsection{Segment inference}
+
+The final step in the decoding process is the segment inference. Once the integrity of the message is verified (meaning that all checks from the previous stages have passed), the decoder initializes the PRNG with the extracted seed obtained from \ref{subsec:droplet_recovery}. Using this seed, a list of segment identifiers can be generated as described in \cite{erlich2017dnasupplementary}. These identifiers represent potential positions of the input segments that were combined to form the droplet, as the same seed was used for the PRNG initialization during the encoding process. \\
+Next, a message-passing algorithm is initiated to try and infer the segments of each droplet. The algorithm first checks whether the droplet contains segments that have been previously inferred. If such are found, they are XOR-ed from the droplet, and their index is removed from the list of indices. When only one segment remains in the droplet, the segment will be assigned to the droplet data payload. The information regarding the inferred segments is propagated to the remaining droplets, and the entire algorithm is recursively repeated until no more updates can be made. This leads to the number of solved segments slowly increasing until the number of observed oligos reaches the number of segments. At this point, the number of solved segments explodes, as illustrated in the picture below:
+
+ \begin{figure}[h]
+    \centering
+    \includegraphics[width=0.7\linewidth]{decoding_oligos}
+    \caption{Solved to observed oligos comparison \cite{erlich2017dnasupplementary}}
+\end{figure}
+
 
 \section{Implementation of  Error-correcting Code Chosen}
 
@@ -296,7 +331,7 @@ The final part of the \texttt{dna\_fountain.py} file is the image creation. The 
 \subsection{Benchmark Results}
 
 In order to test the decoding power and correctness of the in 3.1 described implementation, a benchmark dataset comprised of two different datasets was used. The first dataset is the leftmost logo part of the Fraunhofer Institute logo \ref{fig:logo_short}, which is afterwards converted to a python list of 0s and 1s and saved into the input.py file. The second dataset in \ref{fig:logo_long} is the complete Fraunhofer logo, which is then converted to a binary list similarly to the transformation of the first dataset. Both of the generated pictures are black and white and do not take into account the original colours of the logo. For testing purposes a third set was also used, comprised of only 16 bits, which enables easier tracking of the whole encoding/decoding process.  \\
-White creating output pictures based on the decoded data a 100\% completeness was achieved for both logos. Depending on the chosen logo, different parameters were used for the various stages in the encoding/decoding. Examples of such parameters are the size of the segments in bits, the initial seed, the chosen polynomial for the LFSR and the segments multiplier. Both c and delta values for the soliton distribution remained the same, although they could just as well be made to change accordingly, based on predefined conditions. The table below describes the parameters used for each of the tests. \\
+White creating output pictures based on the decoded data a 100\% completeness was achieved for both logos. Depending on the chosen logo, different parameters were used for the various stages in the encoding/decoding. Examples of such parameters are the size of the segments in bits, the initial seed, the chosen polynomial for the LFSR and the segments multiplier. Both c and delta values for the soliton distribution remained the same, although they could just as well be made to change accordingly, based on predefined conditions. The table below describes the parameters used for each of the tests: \\
 
 
 \begin{table}[ht]
@@ -341,6 +376,7 @@ White creating output pictures based on the decoded data a 100\% completeness wa
     \label{fig:logo_long}
 \end{figure}
 
+\newpage
 \section{Conclusion}
 
 \begin{itemize}
@@ -348,8 +384,6 @@ White creating output pictures based on the decoded data a 100\% completeness wa
 \item Add your own assessment/criticism on the topic
 \end{itemize}
 
-
-\textbf{Some Latex-specific hints:}
 
 
 \begin{itemize}
