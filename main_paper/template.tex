@@ -101,9 +101,8 @@ Date: & \today \\
 \large
 \noindent{}Work based on: \\
 \begin{itemize}
-\item Paper 1: \emph{Put Original Author Names here} Put Original Title(s) here
-\item Paper 2: \emph{Put Original Author Names here} Put Original Title(s) here
-\item ...
+\item Paper 1: \emph{Mercier, Hugues and Bhargava, Vijay K and Tarokh, Vahid}: A survey of error-correcting codes for channels with symbol synchronization errors
+\item Paper 2: \emph{Erlich, Yaniv and Zielinski, Dina} DNA Fountain enables a robust and efficient storage architecture
 \end{itemize}
 
 
@@ -113,6 +112,7 @@ Date: & \today \\
 \newpage 
 
 \begin{abstract}
+This article provides a brief overview of different error-correcting codes and their specifics, such as usage and capability of correcting errors of various kinds. Subsequently, it describes a specific storage strategy called DNA Fountain by examining the different stages, such as encoding and decoding, and provides information about the exact construction and experiments specifics. Furthermore, a python implementation of the storage strategy is suggested, serving as a testing ground to experiment with this storage mechanism. Moreover, two digital logos of Fraunhofer institute are supplied as a benchmark dataset and are used as input data for the python scripts. Lastly, the article concludes with criticism on the topic and lists potential problems or future improvements for the storage strategy.
 \end{abstract}
 
 \newpage
@@ -155,23 +155,24 @@ There are various implementations of error-correcting codes. One such example is
 
 \subsection{Important Terms and Definitions}
 
-Upon reading the overview paper, following important terms and definitions could be listed based on the information in \cite{mercier2010survey}:
+In the context of error-correcting codes for channels with synchronisation errors, following important terms and definitions can be listed based on the information provided in \cite{mercier2010survey}:
 \begin{itemize}
-\item synchronisation error - it is either a delition or an insertion error and excludes substitution errors. For example transmitting 0011 instead of 00011 is a deletion error and transmitting 0011 instead of 011 - insertion error.
-\item duplication or repetition error - it is a special insertion that replaces a bit by two copies of the same bit.
-\item bitshift error - it a special kind of error that might reverse a given string - for example 01 being transmitted as 10.
-\item additive noise - disturbances or interference when transmitting signal over a communication network
-\item redundancy - additional information introduced by error-correcting codes to correction synchronisation errors
-\item run - a substring of identical symbols of maximum length
-\item blocks - used to form chunks of words that are used to divide long messages
+\item \textbf{Synchronisation error}: These are either a deletion or an insertion error and excludes substitution errors. For example transmitting 0011 instead of 00011 is a deletion error and transmitting 0011 instead of 011 - insertion error.
+\item \textbf{Duplication or repetition error}: These errors are a special insertion that replaces a bit by two copies of the same bit.
+\item \textbf{Bitshift error}: A special kind of error that might reverse a given string - for example 01 being transmitted as 10.
+\item \textbf{Additive noise}: Disturbances or interference when transmitting signal over a communication network
+\item \textbf{Redundancy}: Additional information introduced by error-correcting codes to correction synchronisation errors 
+\item \textbf{Run}: A substring of identical symbols of maximum length
+\item \textbf{Block}: Used to form chunks of words that are used to divide long messages
 \end{itemize}
 
+The concepts and terms provided in \cite{mercier2010survey} are crucial for understanding the challenges in designing error-correcting codes for channels with erasures. Due to the specifics and various mechanisms for correcting errors, one such method is described in  \ref{sec:in_depth} to give more clarity and details about the implementation.
 
 \newpage
 
-\section{In-Depth Explanation of Error-correcting Code Chosen}
+\section{In-Depth Explanation of Error-correcting Code Chosen}\label{sec:in_depth}
 
-Current storage medias do not have the capacity to meet the demand for the total amount of worldwide data. On top of that, the costs for maintaining and transferring data tend to increase as well, therefore better solutions are needed \cite{dong2020dna}. One such promising solution are the innovate DNA storage systems. They enable us to store digital data into DNA molecules, which are syntetically syntesized and far exceed the lifespan of general storage mediums \cite{dong2020dna}. But transfering and storing data comes with its complications and certain errors could appear, leading to corrupted or incomplete data. Thus, solutions are needed for correcting these errors. The storing strategy provided in \cite{erlich2017dna} makes use of the so called DNA fountains. Fountain codes are typically used for channels with erasures, where files are split into packets and each of these packets is either received without errors or dropped \cite{mackay2005fountain}.  Standard transfer protocols keep transmitting packets until they are successfully received from the other side, where another channel is also required to keep track of the state of transmitted packets or those that require restransmission. Fountain codes on the other side create packets as a result of functions of the whole file and the receiver only has to collect any N packets, with $N \textgreater K$ (original size) so that the whole file can be recovered.In the methaphorical sense, a dna fountain generates droplets representing packets of data und everyone who wants to collect these droplets has to put a bucket under the fountain and wait until the amount collected is larger than original size K of the data \cite{mackay2005fountain}. Due to the nature of the fountain, such DNA fountains can be classified as rateless, since the number of packets generated could be limitless.
+Current storage medias do not have the capacity to meet the demand for the total amount of worldwide data. Moreover, the costs for maintaining and transferring data are increasing, therefore better solutions are needed \cite{dong2020dna}. One such promising solution is the innovate DNA storage systems. These systems allow us to store digital data into DNA molecules, which are synthetically synthesized and far exceed the lifespan of general storage mediums \cite{dong2020dna}. However, transfering and storing data comes with its complications and certain errors may occur, leading to corrupted or incomplete data. Thus, solutions for correcting these errors are necessary. The storing strategy described in \cite{erlich2017dna} makes use of the so-called DNA fountains. Fountain codes are typically used in channels with erasures, where files are split into packets and each packet is either received without errors or dropped \cite{mackay2005fountain}.  Standard transfer protocols keep transmitting packets until they are successfully received from the other side, where another channel is also required to keep track of the state of transmitted packets or those that require restransmission. Fountain codes on the other side create packets as a result of functions of the whole file and the receiver only needs to collect any N packets, with $N \textgreater K$ (original size), to recover the whole file.In the methaphorical sense, a dna fountain generates droplets representing packets of data und anyone wishing to collect these droplets has to place a bucket under the fountain and wait until the amount collected exceeds the original size K of the data \cite{mackay2005fountain}. Due to the nature of the fountain,  DNA fountains can be classified as rateless, since the number of packets generated can be limitless.
 The strategy for data storage using DNA fountains proposed in \cite{erlich2017dna} works in two stages. 
 
 \subsection{DNA Fountain encoding}
@@ -179,7 +180,7 @@ The strategy for data storage using DNA fountains proposed in \cite{erlich2017dn
 The first stage is the encoding phase, which consists of three stages - preprocessing, luby transform and screening.
 
 \subsubsection{Preprocessing}  
-The first step of the encoding is the preprocessing stage. It begins by packaging the files we want to encode in a tar file and compressing them using stardard lossless algorithms \cite{erlich2017dnasupplementary}.It partitions the file non-overlapping segmets of identical length. A simple example would be splitting the code 001001100101 into segments of length 4, resulting in the following segments:
+The first step of the encoding is the preprocessing stage. It begins by packaging the files we want to encode in a tar file and compressing them using stardard lossless algorithms \cite{erlich2017dnasupplementary}.It partitions the file into non-overlapping segmets of identical length. A simple example would be splitting the code 001001100101 into segments of length 4, resulting in the following segments:
 \begin{itemize}
 \item Segment 1: 0010
 \item Segment 2: 0110
@@ -187,7 +188,7 @@ The first step of the encoding is the preprocessing stage. It begins by packagin
 \end{itemize}
 
 \subsubsection{Luby Transform}
-The next step of the enconding is the so-called \textbf{Luby-transform stage}. The first job of the Luby Transform stage is to initialize a pseudonumber number generator (PRNG) with the help of a seed. The seed used by the authors in \cite{erlich2017dnasupplementary} corresponds to the current state of the PRNG, with each cycle for the seed generated with the help of a Linear Feedback Shift Register (LFSR) \cite{erlich2017dnasupplementary}. A LFSR is a shift register whose input bit is a linear function of its previous state \cite{hathwalia2014design}. A LFSR uses a polynomial to generate the so called "taps", which correspond to the coefficients of the polynomial. It works by first shifting the n-bit large string to the right and then XORs together the bits from the previous state corresponding to the "tap" positions. Given the right polynomial, a LFSR can be considered a "maximum-length LFSR", since it is able to produce \(2^{n}-1\) states before returning to the initial state \cite{hathwalia2014design}. In the context of the dna fountain strategy, such LFSR will examine each seed in a given interval without repetition \cite{erlich2017dnasupplementary}. Below is a quick explanation on how the LFSR works: 
+The next step of the encoding is the so-called \textbf{Luby-transform stage}. The first job of the Luby Transform stage is to initialize a pseudorandom number generator (PRNG) with the help of a seed. The seed used by the authors in \cite{erlich2017dnasupplementary} corresponds to the current state of the PRNG, with each cycle for the seed generated with the help of a Linear Feedback Shift Register (LFSR) \cite{erlich2017dnasupplementary}. An LFSR is a shift register whose input bit is a linear function of its previous state \cite{hathwalia2014design}. A LFSR uses a polynomial to generate the so called "taps", which correspond to the coefficients of the polynomial. It works by first shifting the n-bit large string to the right and then XORs together the bits from the previous state corresponding to the "tap" positions. Given the right polynomial, a LFSR can be considered a "maximum-length LFSR", since it is able to produce \(2^{n}-1\) states before returning to the initial state \cite{hathwalia2014design}. In the context of the dna fountain strategy, such LFSR will examine each seed in a given interval without repetition \cite{erlich2017dnasupplementary}. Below is a quick explanation on how the LFSR works: 
 
 \begin{itemize}
 \item Suppose we generate a 3-bit seed
@@ -264,7 +265,7 @@ with $2t = n - k$ being the number of parity symbols \cite{sklar2001reed}. For e
 
 
 \subsubsection{Screening}
-The luby transform stage concludes with a screening stage.This stage first converts the achieved droplet to DNA using the following convertion rules: \{00,01,10,11\} to \{A,C,G,T\} \cite{erlich2017dnasupplementary}. After that, the result dna sequence is screened against invalid sequences, such a homopolymer runs or GC content. Long homopolymer runs and or sequences with high GC concentration are undesirable \cite{erlich2017dna} due to being more difficult to syntesize or are more prone to sequencing errors. DNA sequences containing one of the above described properties are rejected and those that pass added to the oligo design file. In \cite{erlich2017dna}, the created droplets were 38 bytes (4 bytes for seed, 32 bytes for data payload and 2 bytes for RS code). Therefore, the values for homopolymer runs were set to \(<= 3 nt \) (nucleotides) and 45-55\% GC content, but these values could be changed based on the specific case. Below is the screening stage described with continuation of the example above:
+The Luby transform stage concludes with a screening stage.This stage first converts the achieved droplet to DNA using the following conversion rules: \{00,01,10,11\} to \{A,C,G,T\} \cite{erlich2017dnasupplementary}. After that, the result dna sequence is screened for invalid sequences, such a homopolymer runs or GC content. Long homopolymer runs and sequences with high GC concentration are undesirable \cite{erlich2017dna} due to being more difficult to syntesize or are more prone to sequencing errors. DNA sequences containing one of the above described properties are rejected and those that pass added to the oligo design file. In \cite{erlich2017dna}, the created droplets were 38 bytes (4 bytes for seed, 32 bytes for data payload and 2 bytes for RS code). Therefore, the values for homopolymer runs were set to \(<= 3 nt \) (nucleotides) and 45-55\% GC content, but these values could be changed based on the specific case. Below is the screening stage described with continuation of the example above:
 
 \begin{itemize}
 \item Convert the droplet to a DNA sequence: $110101 \rightarrow TCC$
@@ -309,7 +310,7 @@ Next, a message-passing algorithm is initiated to try and infer the segments of 
 
 \section{Implementation of  Error-correcting Code Chosen}
 
-\subsection{DNA Fountain implementation}
+\subsection{DNA Fountain implementation}\label{subsec:implementation}
 
 The suggested in \cite{erlich2017dna} dna fountain method was implemented in python by making use of standard libraries and a couple of extra libraries for ready implementations of the LFSR and RS-Codes. The project contains the following files:
 \begin{itemize}
@@ -328,13 +329,13 @@ Once the oligos are created, they are passed, along with other parameters to the
 The final part of the \texttt{dna\_fountain.py} file is the image creation. The \texttt{image\_creator.py} file is called, which contains a function for generating a .PNG picture based on the returned data (list of 0s and 1s). That way we can compare the output picture to the initial picture and compare whether we have successfully decoded the initial file. Since some of the bits may be different, which most of the time is might not be noticable with a human eye, the \texttt{calc\_similarity} function from the helper.py file can compare both input and output lists and return a value between [0,1] indicating how similar the decoded file is to the initial. Value of 1 means the initial file was decoded without any errors or missing information, anything below it would indicate missing or incorrect data.
 
 
-\subsection{Benchmark Results}
+\subsection{Benchmark Results}\label{subsec:benchmark_results}
 
 In order to test the decoding power and correctness of the in 3.1 described implementation, a benchmark dataset comprised of two different datasets was used. The first dataset is the leftmost logo part of the Fraunhofer Institute logo \ref{fig:logo_short}, which is afterwards converted to a python list of 0s and 1s and saved into the input.py file. The second dataset in \ref{fig:logo_long} is the complete Fraunhofer logo, which is then converted to a binary list similarly to the transformation of the first dataset. Both of the generated pictures are black and white and do not take into account the original colours of the logo. For testing purposes a third set was also used, comprised of only 16 bits, which enables easier tracking of the whole encoding/decoding process.  \\
 White creating output pictures based on the decoded data a 100\% completeness was achieved for both logos. Depending on the chosen logo, different parameters were used for the various stages in the encoding/decoding. Examples of such parameters are the size of the segments in bits, the initial seed, the chosen polynomial for the LFSR and the segments multiplier. Both c and delta values for the soliton distribution remained the same, although they could just as well be made to change accordingly, based on predefined conditions. The table below describes the parameters used for each of the tests: \\
 
 
-\begin{table}[ht]
+\begin{table}[h!]
     \centering
     \small
     \begin{tabularx}{\textwidth}{|X|X|X|X|}
@@ -360,10 +361,25 @@ White creating output pictures based on the decoded data a 100\% completeness wa
     \label{tab:benchmark-parameters}
 \end{table}
 
+A couple of aspects worth mentioning consider the chosen parameters for the different inputs. One such is the segments multiplier. When testing with the minimal input (16 bits), the generated amount of oligos needs to be way more than the input segments. The main reason for that is since we are picking segments at random, there exists the possibility of not picking a certain segment, which would lead to not being able to fully restore the file. Another thing to consider is seed size. Since we are preprocessing the input into non-overlapping segments, choosing a segment size which does not split the input into equal size can introduce difficulties. An example of such is having to fill the remaining segments with leading 0 bits to match the remaining size. Furthermore, the initial seed has to have at least one "1" bit, due to how the LFSR works, otherwise it will not be able to cycle through different states. As a general remark, the in the above table provided values do not always achieve 100\% completion, as some differences may occur based on how the oligos are created. 
+
+
+\newpage
+\newpage
+\section{Conclusion}
+
+To summarize, in this work, a DNA storage strategy called "DNA Fountain" was presented. It consists of two main stages - encoding and decoding, both of which working together to enable virtually unlimited data retrieval. According to the authors in \cite{erlich2017dna}, the suggested data storage strategy enables "high physical density while approaching the shannon capacity of DNA storage closer than any previous design".\\ 
+In the underlying experiments, 2.15 Mbytes of data were encoded and later decoded, while achieving 1.98 bits/nt coding potential and only using 7\% redundancy against dropout. This also lead to the full recovery of the encoded data, as demonstrated with the implementation part in \ref{subsec:implementation}. In contrast to the authors in \cite{erlich2017dna}, the implementation in \ref{subsec:implementation} required significantly more oligos (up to 3.5 times compared to only 5-10\% more) to be able to fully decode the data. This will introduce more overhead and, most likely, higher prices due to the need of  synthesizing these oligos. The high cost of DNA synthesis is also mentioned in \cite{erlich2017dna}, with data pointing at 3500 dollars / Mbyte. Two general approaches are also mentioned to potentially address the high costs issue.The first one involves continuous improvements to the DNA synthesis chemistry. The second one aims to achieve cost reduction by exploring "quick-and-dirty" oligo synthesis methods to optimize machine time. \\
+Another aspect worth mentioning is that the above suggested strategy does not attempt to correct encoding errors. The supplied extra bits (for example through Reed Solomon Code) only aim to recognize if there were any errors during oligo synthesis or transfering. This is a big difference in comparison to other methods that try to correc and identify various errors. Moving forward, with the right optimization and investment, dna storage methods may prove to be cost-efficient and viable long-term solutions.
+\begin{itemize}
+\item Summarize the main points and achievements
+\item Add your own assessment/criticism on the topic
+\end{itemize}
+
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.7\linewidth]{input_small}
+    \includegraphics[width=0.6\linewidth, scale=0.5]{input_small}
     \caption{Small Fraunhofer logo}
     \label{fig:logo_short}
 \end{figure}
@@ -376,21 +392,11 @@ White creating output pictures based on the decoded data a 100\% completeness wa
     \label{fig:logo_long}
 \end{figure}
 
-\newpage
-\section{Conclusion}
-
-\begin{itemize}
-\item Summarize the main points and achievements
-\item Add your own assessment/criticism on the topic
-\end{itemize}
-
-
 
 \begin{itemize}
 \item You can use abbreviations, like \gls{AD}, \gls{MS} or \gls{CD}.
 \item There are also symbols like for example \gls{symb:Pi}, \gls{symb:Phi} and \gls{symb:Lambda}.
 \item Last but not least, use glossary entries like \gls{glos:AD} and \gls{glos:F}.
-\item Do not forget to cite related work, like \cite{okman2011security} or \cite{borthakur2011apache}.
 \end{itemize}
 \newpage
 
