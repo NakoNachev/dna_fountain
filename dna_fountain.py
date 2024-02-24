@@ -8,10 +8,9 @@ import re
 import helper
 import image_creator
 from pylfsr import LFSR
-from soliton import robust_soliton_distribution, ideal_soliton_distribution
-from decoder import recursively_infer_segments, recover_file_with_repeated_passes
+from soliton import robust_soliton_distribution
+from decoder import recover_file_with_repeated_passes
 from models import DropletData, OligoData
-from concurrent.futures import ProcessPoolExecutor, as_completed
 
 # default globals, overwritten on start
 segment_size = 4
@@ -67,11 +66,9 @@ def create_droplet_bin_old(segments: List[List[int]]) -> DropletData:
         for _ in range(segment_size-len(segments_bitwise)):
             segments_bitwise.insert(0, 0)
     # generate seed
-    # seed = [int(bit) for bit in bin(rd.randint(0, 3))[2:].zfill(2)]
     seed = get_lsfr_seed()
     for bit in seed:
         segments_bitwise.insert(0, bit)
-    # @TODO: activate, previous problem with solomon code not always being the same length
     # segments_bitwise_rs = add_reed_solomon(segments_bitwise)
     # return segments_bitwise_rs
     return DropletData(segments_bitwise, sample_size)
@@ -100,11 +97,11 @@ def create_droplet_bin(segments: List[List[int]]) -> DropletData:
         segments_bitwise = [0]*(segment_size - len(segments_bitwise)) + segments_bitwise
 
     # Optional: Add error correction code
-    # droplet_data = add_reed_solomon(droplet_data)
+    # droplet_data = add_reed_solomon(seed + segments_bitwise)
     return DropletData(seed + segments_bitwise, sample_size)
 
 
-def luby_trfm(segments: List[List[int]]) -> OligoData:
+def luby_trfm(segments: List[List[int]]) -> OligoData | None:
     droplet = create_droplet_bin(segments)
     droplet_dna = transform_to_dna(droplet.droplet)
     if has_repetitive_chars(droplet_dna):
@@ -126,6 +123,7 @@ def add_reed_solomon(droplet_bits: List[int]):
 
 
 def transform_to_dna(droplet: List[int]) -> str:
+    """ transforms the resulted droplet into DNA nucleotides"""
     mapping = {
         '00': 'A',
         '01': 'C',
@@ -140,7 +138,8 @@ def transform_to_dna(droplet: List[int]) -> str:
 
 def has_repetitive_chars(sequence: str) -> bool:
     # for 38 bytes (304 bits) homopolymer runs were <= 3nt, meaning 6 bits
-    regex = re.compile(r'(.+)\1{' + str(4) + ',}')
+    runs = 4
+    regex = re.compile(r'(.+)\1{' + str(runs) + ',}')
     match = regex.search(sequence)
     if match:
         return True
@@ -165,14 +164,9 @@ def oligo_creation(segments: List[List[int]], segments_multiplier: int) -> List[
     return oligos
 
 
-def induce_errors(oligos: List[str]) -> None:
-    oligos[1] = helper.change_char(oligos[1], 1, 'A')
-    oligos[1] = helper.change_char(oligos[1], 2, 'A')
-
-
 def set_globals_picture_minimal() -> None:
     global segment_size, initial_seed, seed_size, poly
-    segment_size = 4
+    segment_size = 2
     initial_seed = [1, 0, 0, 0]
     seed_size = len(initial_seed)
     poly = [4, 3]
@@ -199,7 +193,7 @@ def init_settings(input_to_use: str) -> (List[int], str, bool):
     if input_to_use == 'minimal':
         set_globals_picture_minimal()
         initial_input = input.picture_minimal
-        segments_multiplier = 5
+        segments_multiplier = 10
     elif input_to_use == 'short':
         set_globals_picture_short()
         picture_name = "logo_short"
@@ -235,12 +229,12 @@ def main():
 
     # create oligos
     oligos = oligo_creation(segments, segments_multiplier)
-    # induce_errors(oligos)  #@TODO: activate
 
     data = recover_file_with_repeated_passes(
         oligos, len(segments), segment_size, seed_size, poly, 1)
     print(f'final processed count {len(data)} / {len(segments)}')
     fixed = helper.dict_unsorted_to_list(data, len(segments), segment_size)
+    # drop extra bits 
     if len(fixed) > len(initial_input):
         fixed = fixed[:len(initial_input)]
 
