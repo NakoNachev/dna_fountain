@@ -131,25 +131,25 @@ This article provides a brief overview of different error-correcting codes and t
 \subsection{Summary Overview Paper}
 
 The paper in \cite{mercier2010survey} provides a detailed survey about different error correcting codes, their implementation
-and associated obstacles with each of the codes. The paper begins by examing the historical significance of error synchronisation problems in
-communication systems dating back to Samuel Morse, which remain an important topic even in todays technological systems. Although often treated as
-different problems, synchronisation and additive noise tend to have the same effect on communcation channels by reducing their capacity.According to the 
-article, designing error-correcting codes to tackle these problems proves to be quite challenging, with many techniques implementation not based on coding or even 
+and associated obstacles with each of the codes. The paper begins by examining the historical significance of error synchronization problems in
+communication systems dating back to Samuel Morse, which remain an important topic even in today's technological systems. Although often treated as
+different problems, synchronisation and additive noise tend to have the same effect on communication channels by reducing their capacity.According to the 
+article, designing error-correcting codes to tackle these problems proves to be quite challenging, with many techniques of implementation not based on coding or even 
 failing to mention synchronisation-correcting codes. \\
- This article continues with a brief introduction on the error-correcting codes and explaining the 
+This article continues with a brief introduction on the error-correcting codes and explaining the 
 different preliminaries associated with the survey. Such preliminaries include the mathematical notations used, the different types of synchronisation errors and their definitions.
-These range from deletion errors, insertion errors, duplication or repetition errors to bitshift errors. Last but not least, obstacles associated with the 
-error correcting codes are described. Examples of such are huge bursts of substition errors, splitting long messages of data into blocks of with block boundaries
-sometimes being unknown to receiver or codes being unable to keep the same correction capability when encoding several blocks. The authors describe in section III different 
+These range from deletion errors, insertion errors and duplication or repetition errors to bitshift errors. Last but not least, obstacles associated with the 
+error correcting codes are described. Examples of such are huge bursts of substitution errors, splitting long messages of data into blocks with boundaries
+sometimes unknown to the receiver or codes being unable to keep the same correction capability when encoding several blocks. The authors describe in section III different 
 synchronisation-correcting codes, how they are implemented, the historic research done by various authors and specific limitations for the different types. The section starts
 with binary algebraic block codes using (0,1) alphabets, nonbinary and perfect codes, codes capable of correcting bursts of synchronisation errors, synchronizable, marker codes, codes for weak
 synchronisation errors, convolutional codes, expurgated and codes for random synchronisation channels. \\
 The last section of the paper discusses future directions of synchronisation error-correcting codes. Binary block codes are currently unable to detect more than one synchronisation
-errors per block. Further challenges arize in estimating the capacity of channels corrupted by synchronisation errors and such where random deletion and/or insertion errors can occur.
-According to the authors, none of the codes described in the paper have all the properties required to be used in pratical communication systems. One solution could be concatenating different
+errors per block. Further challenges arise in estimating the capacity of channels corrupted by synchronisation errors as well as situations where random deletion and/or insertion errors can occur.
+According to the authors, none of the codes described in the paper has all the properties required to be used in pratical communication systems. One solution could be concatenating different
 coding schemes in order to use the strengths of the various codes for their specific implementation use cases. \\
-Deriving from the examples in the article from above, one could divide the error-correcting codes in multiple different categories. One separation used could be based on the number of symbols used in the alphabet - either binary alphabet consisting of (0,1)* symbols or non-binary with 2 or more symbols. Another categorization could follow based on other characteristics - such as block codes vs convolutional codes. Block codes break the data down to fixed-sized blocks and append protective or unique bits for error handling. Convolutional codes on the other side process the data continuously as a stream and do not split the data into blocks. Error correction here is done on the fly. \\
-As far as characteristics of the error-correcting codes are concerned, performance, redundancy, error detection and correction seem to be the most important ones. Redundancy finds its application in appending the extra bits for the receiver to make use of and identify errors that may have happended during the transmition. Performance concerns the rate at which algorithms are able to correct the data, where similar to most systems a good balance between correctness achived and computation should be achieved. Error detection and correction seems to be closely related and are the general characteristics the prove how valuable a given error-correcting code is. \\
+Drawing from the examples in the preciding article, one could divide the error-correcting codes in multiple categories. One separation used could be based on the number of symbols used in the alphabet - either binary alphabet consisting of (0,1)* symbols or non-binary with 2 or more symbols. Another categorization could follow based on other characteristics - such as block codes vs convolutional codes. Block codes break the data down to fixed-sized blocks and append protective or unique bits for error handling. Convolutional codes on the other side process the data continuously as a stream and do not segment the data into blocks. Error correction here is done on the fly. \\
+As far as characteristics of the error-correcting codes are concerned, performance, redundancy, error detection and correction seem to be the most important ones. Redundancy finds its application in appending the extra bits for the receiver to make use of and identify errors that may have happened during the transmition. Performance concerns the rate at which algorithms are able to correct the data, where similar to most systems a good balance between correctness achived and computation should be achieved. Error detection and correction seems to be closely related and are the general characteristics that prove how valuable a given error-correcting code is. \\
 There are various implementations of error-correcting codes. One such example is by using error-correcting output coding for improving text classification and thus reducing text classification errors by 66 percent.\cite{ghani2000using} Another example is by using error-correcting codes for real time communication in wireless networks. \cite{elaoud1998adaptive} The authors simulate using an adaptive scheme for reducing bandwidth overhead by comparing it to a single code scheme.
 
 
@@ -172,8 +172,8 @@ The concepts and terms provided in \cite{mercier2010survey} are crucial for unde
 
 \section{In-Depth Explanation of Error-correcting Code Chosen}\label{sec:in_depth}
 
-Current storage medias do not have the capacity to meet the demand for the total amount of worldwide data. Moreover, the costs for maintaining and transferring data are increasing, therefore better solutions are needed \cite{dong2020dna}. One such promising solution is the innovate DNA storage systems. These systems allow us to store digital data into DNA molecules, which are synthetically synthesized and far exceed the lifespan of general storage mediums \cite{dong2020dna}. However, transfering and storing data comes with its complications and certain errors may occur, leading to corrupted or incomplete data. Thus, solutions for correcting these errors are necessary. The storing strategy described in \cite{erlich2017dna} makes use of the so-called DNA fountains. Fountain codes are typically used in channels with erasures, where files are split into packets and each packet is either received without errors or dropped \cite{mackay2005fountain}.  Standard transfer protocols keep transmitting packets until they are successfully received from the other side, where another channel is also required to keep track of the state of transmitted packets or those that require restransmission. Fountain codes on the other side create packets as a result of functions of the whole file and the receiver only needs to collect any N packets, with $N \textgreater K$ (original size), to recover the whole file.In the methaphorical sense, a dna fountain generates droplets representing packets of data und anyone wishing to collect these droplets has to place a bucket under the fountain and wait until the amount collected exceeds the original size K of the data \cite{mackay2005fountain}. Due to the nature of the fountain,  DNA fountains can be classified as rateless, since the number of packets generated can be limitless.
-The strategy for data storage using DNA fountains proposed in \cite{erlich2017dna} works in two stages. 
+Current storage medias do not have the capacity to meet the demand for the total amount of worldwide data. Moreover, the costs for maintaining and transferring data are increasing, therefore better solutions are needed \cite{dong2020dna}. One such promising solution is the innovative DNA storage systems. These systems allow us to store digital data into DNA molecules, which are synthesized and far exceed the lifespan of general storage mediums \cite{dong2020dna}. However, transferring and storing data comes with their complications and certain errors may occur, leading to corrupted or incomplete data. Thus, solutions for correcting these errors are necessary. The storing strategy described in \cite{erlich2017dna} makes use of the so-called DNA fountains. Fountain codes are typically used in channels with erasures, where files are split into packets and each packet is either received without errors or dropped \cite{mackay2005fountain}.  Standard transfer protocols keep transmitting packets until they are successfully received from the other side, where another channel is also required to keep track of the state of transmitted packets or those that require retransmission. Fountain codes on the other side create packets as a result of functions of the whole file and the receiver only needs to collect any N packets, with $N \textgreater K$ (original size), to recover the whole file.In the metaphorical sense, a dna fountain generates droplets representing packets of data and anyone wishing to collect these droplets has to place a bucket under the fountain and wait until the amount collected exceeds the original size K of the data \cite{mackay2005fountain}. Due to the nature of the fountain,  DNA fountains can be classified as rateless, since the number of packets generated can be limitless.
+The strategy for data storage using DNA fountains proposed in \cite{erlich2017dna} works in two stages.
 
 \subsection{DNA Fountain encoding}
 
@@ -361,21 +361,16 @@ White creating output pictures based on the decoded data a 100\% completeness wa
     \label{tab:benchmark-parameters}
 \end{table}
 
-A couple of aspects worth mentioning consider the chosen parameters for the different inputs. One such is the segments multiplier. When testing with the minimal input (16 bits), the generated amount of oligos needs to be way more than the input segments. The main reason for that is since we are picking segments at random, there exists the possibility of not picking a certain segment, which would lead to not being able to fully restore the file. Another thing to consider is seed size. Since we are preprocessing the input into non-overlapping segments, choosing a segment size which does not split the input into equal size can introduce difficulties. An example of such is having to fill the remaining segments with leading 0 bits to match the remaining size. Furthermore, the initial seed has to have at least one "1" bit, due to how the LFSR works, otherwise it will not be able to cycle through different states. As a general remark, the in the above table provided values do not always achieve 100\% completion, as some differences may occur based on how the oligos are created. 
+Several noteworthy aspects consider the chosen parameters for the different inputs. One such aspect is the segments multiplier. When testing with the minimal input (16 bits), a higher amount of oligos needs to be generated in comparison to the input segments. The main reason for that is since we are picking segments at random, there exists the possibility of not picking a certain segment, which would lead to not being able to fully restore the file. Another important consideration is the seed size. Since we are preprocessing the input into non-overlapping segments, choosing a segment size which does not split the input into equal size can introduce difficulties. For example filling the remaining segments with leading 0 bits may be necessary to match the required size. Furthermore, the initial seed must contain at least one "1" bit, due to how the LFSR works, otherwise it will not be able to cycle through different states. It is important to note that the values provided in the table above may not always achieve 100\% completion, as some differences may occur based on how the oligos are created. 
 
 
 \newpage
 \newpage
 \section{Conclusion}
 
-To summarize, in this work, a DNA storage strategy called "DNA Fountain" was presented. It consists of two main stages - encoding and decoding, both of which working together to enable virtually unlimited data retrieval. According to the authors in \cite{erlich2017dna}, the suggested data storage strategy enables "high physical density while approaching the shannon capacity of DNA storage closer than any previous design".\\ 
-In the underlying experiments, 2.15 Mbytes of data were encoded and later decoded, while achieving 1.98 bits/nt coding potential and only using 7\% redundancy against dropout. This also lead to the full recovery of the encoded data, as demonstrated with the implementation part in \ref{subsec:implementation}. In contrast to the authors in \cite{erlich2017dna}, the implementation in \ref{subsec:implementation} required significantly more oligos (up to 3.5 times compared to only 5-10\% more) to be able to fully decode the data. This will introduce more overhead and, most likely, higher prices due to the need of  synthesizing these oligos. The high cost of DNA synthesis is also mentioned in \cite{erlich2017dna}, with data pointing at 3500 dollars / Mbyte. Two general approaches are also mentioned to potentially address the high costs issue.The first one involves continuous improvements to the DNA synthesis chemistry. The second one aims to achieve cost reduction by exploring "quick-and-dirty" oligo synthesis methods to optimize machine time. \\
-Another aspect worth mentioning is that the above suggested strategy does not attempt to correct encoding errors. The supplied extra bits (for example through Reed Solomon Code) only aim to recognize if there were any errors during oligo synthesis or transfering. This is a big difference in comparison to other methods that try to correc and identify various errors. Moving forward, with the right optimization and investment, dna storage methods may prove to be cost-efficient and viable long-term solutions.
-\begin{itemize}
-\item Summarize the main points and achievements
-\item Add your own assessment/criticism on the topic
-\end{itemize}
-
+To summarize, in this work, a DNA storage strategy called "DNA Fountain" was presented. It consists of two main stages - encoding and decoding, both of which work together to enable virtually unlimited data retrieval. According to the authors in \cite{erlich2017dna}, the suggested data storage strategy enables "high physical density while approaching the Shannon capacity of DNA storage closer than any previous design".\\ 
+In the underlying experiments, 2.15 Mbytes of data were encoded and later decoded, while achieving 1.98 bits/nt coding potential, and only using 7\% redundancy against dropout. This also led to the full recovery of the encoded data, as demonstrated with the implementation part in \ref{subsec:implementation}. In contrast to the authors in \cite{erlich2017dna}, the implementation in \ref{subsec:implementation} required significantly more oligos (up to 3.5 times compared to only 5-10\% more) to be able to fully decode the data. This will introduce more overhead and, most likely, higher prices due to the need of  synthesizing these oligos. The high cost of DNA synthesis is also mentioned in \cite{erlich2017dna}, with data pointing at 3500 dollars / Mbyte. Two general approaches are also mentioned to potentially address the issue of high costs. The first one involves continuous improvements to the DNA synthesis chemistry. The second one aims to achieve cost reduction by exploring "quick-and-dirty" oligo synthesis methods to optimize machine time. \\
+Another aspect worth mentioning is that the above suggested strategy does not attempt to correct encoding errors. The supplied extra bits (for example through Reed Solomon Code) only aim to recognize if there were any errors during oligo synthesis or transferring. If such errors are found, the oligos are dropped and ignored. This is a big difference in comparison to other methods that try to correct and identify various errors by using error-correcting algorithms. Moving forward, with the right optimization and investment, DNA storage methods may prove to be cost-efficient and viable long-term solutions.
 
 \begin{figure}[h]
     \centering
@@ -393,22 +388,9 @@ Another aspect worth mentioning is that the above suggested strategy does not at
 \end{figure}
 
 
-\begin{itemize}
-\item You can use abbreviations, like \gls{AD}, \gls{MS} or \gls{CD}.
-\item There are also symbols like for example \gls{symb:Pi}, \gls{symb:Phi} and \gls{symb:Lambda}.
-\item Last but not least, use glossary entries like \gls{glos:AD} and \gls{glos:F}.
-\end{itemize}
-\newpage
 
-%print glossary
-\printglossary[style=altlist,title=Glossary]
- 
-%print abbreviations
-\printglossary[type=\acronymtype,style=long]
- 
-%print symbols
-\printglossary[type=symbolslist,style=long]
 
+\clearpage
 \newpage
 
 \bibliography{bib}
