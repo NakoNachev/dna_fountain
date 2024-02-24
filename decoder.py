@@ -32,7 +32,7 @@ def init_lfsr_from_seed(seed: List[int], poly: List[int]) -> LFSR:
     return LFSR(initstate=seed, fpoly=poly)
 
 
-def decode_oligo(oligo: OligoData, segment_size: int, seed_size: int, poly: List[int]):
+def decode_oligo(oligo: OligoData, segment_size: int, seed_size: int):
     mapping = {
         'A': '00',
         'C': '01',
@@ -47,11 +47,11 @@ def decode_oligo(oligo: OligoData, segment_size: int, seed_size: int, poly: List
     data = binary_sequence[seed_size:(seed_size + segment_size)]
     error_corr = binary_sequence[(seed_size + segment_size):]
     # has_errors = check_reed_solomon_error(binary_sequence)
-    return data, seed_int, poly
+    return data, seed_int
 
 
 def get_segment_indices(oligo: OligoData, total_segments: int, segment_size: int, seed_size: int, poly: List[int]) -> List[int]:
-    _, seed_int, poly = decode_oligo(oligo, segment_size, seed_size, poly)
+    _, seed_int = decode_oligo(oligo, segment_size, seed_size)
     lfsr = init_lfsr_from_seed(seed_int, poly)
 
     # extracts index from the current state of the seed
@@ -94,7 +94,7 @@ def recursively_infer_segments(oligos: List[OligoData], inferred_segments: dict,
     for oligo in preprocessed_oligos:
         segment_indices = get_segment_indices(
             oligo, total_segments, segment_size, seed_size, poly)
-        droplet_data, _, _ = decode_oligo(oligo, segment_size, seed_size, poly)
+        droplet_data, _,  = decode_oligo(oligo, segment_size, seed_size)
         inferred_segments = update_droplet(
             droplet_data, segment_indices, inferred_segments)
     if len(inferred_segments) > prior_inferred_count:
