@@ -101,7 +101,7 @@ def create_droplet_bin(segments: List[List[int]]) -> DropletData:
     return DropletData(seed + segments_bitwise, sample_size)
 
 
-def luby_trfm(segments: List[List[int]]) -> OligoData | None:
+def luby_trfm(segments: List[List[int]]):
     droplet = create_droplet_bin(segments)
     droplet_dna = transform_to_dna(droplet.droplet)
     if has_repetitive_chars(droplet_dna):
@@ -158,8 +158,7 @@ def oligo_creation(segments: List[List[int]], segments_multiplier: int) -> List[
     while len(oligos) < desired_oligo_len:
         oligo: OligoData = luby_trfm(segments)
         if oligo:
-            print(f'Generating oligos {
-                  len(oligos)} / total {desired_oligo_len}')
+            print(f'Generating oligos {len(oligos)} / total {desired_oligo_len}')
             oligos.append(oligo)
     return oligos
 

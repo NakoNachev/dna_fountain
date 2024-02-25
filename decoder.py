@@ -111,8 +111,7 @@ def recover_file_with_repeated_passes(oligos: List[OligoData], total_segments: i
 
     while pass_count < max_passes and len(inferred_segments) < total_segments:
         pass_count += 1
-        print(f"Pass {pass_count}: Starting with {
-              len(inferred_segments)} inferred segments")
+        print(f"Pass {pass_count}: Starting with {len(inferred_segments)} inferred segments")
         inferred_segments = recursively_infer_segments(
             oligos, inferred_segments, total_segments, segment_size, seed_size, poly)
 
