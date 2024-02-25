@@ -37,3 +37,5 @@ and add a shebang at the top of the file. That way the file can be executed as f
 ```shell
 ./dna_fountain.py
 ```
+
+For the project python version 3.12.1 was used. Project was tested also with 3.9
